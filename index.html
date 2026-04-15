@@ -3,859 +3,648 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Üretim Planlama Merkezi</title>
+<title>Üretim Planlama Sistemi</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231d9e75'/%3E%3C!-- Fabrika binası --%3E%3Crect x='4' y='14' width='24' height='14' rx='1' fill='white' opacity='0.95'/%3E%3C!-- Çatı üçgeni sol --%3E%3Cpolygon points='4,14 11,7 18,14' fill='white' opacity='0.95'/%3E%3C!-- Çatı üçgeni sağ --%3E%3Cpolygon points='14,14 21,7 28,14' fill='white' opacity='0.75'/%3E%3C!-- Baca 1 --%3E%3Crect x='7' y='4' width='3' height='6' rx='1' fill='white' opacity='0.9'/%3E%3C!-- Baca 2 --%3E%3Crect x='12' y='6' width='3' height='4' rx='1' fill='white' opacity='0.7'/%3E%3C!-- Kapı --%3E%3Crect x='13' y='20' width='6' height='8' rx='1' fill='%231d9e75'/%3E%3C!-- Pencere sol --%3E%3Crect x='6' y='19' width='5' height='4' rx='1' fill='%231d9e75' opacity='0.8'/%3E%3C!-- Pencere sağ --%3E%3Crect x='21' y='19' width='5' height='4' rx='1' fill='%231d9e75' opacity='0.8'/%3E%3C/svg%3E"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a18;font-size:14px;line-height:1.6}
-/* ── Layout ── */
-.app-shell{display:flex;min-height:100vh}
-.sidebar{width:220px;flex-shrink:0;background:#fff;border-right:0.5px solid #e0dfd8;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:10}
-.sidebar-logo{padding:18px 20px 14px;border-bottom:0.5px solid #e0dfd8}
-.sidebar-logo h1{font-size:14px;font-weight:600;color:#1a1a18}
-.sidebar-logo p{font-size:11px;color:#888780;margin-top:2px}
-.sidebar-nav{padding:12px 10px;flex:1;overflow-y:auto}
-.nav-section{font-size:10px;font-weight:600;color:#b4b2a9;text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 4px}
-.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#5f5e5a;transition:background .15s,color .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
-.nav-item:hover{background:#f1efe8;color:#1a1a18}
-.nav-item.active{background:#f1efe8;color:#1a1a18;font-weight:500}
-.nav-item .nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.sidebar-footer{padding:14px 16px;border-top:0.5px solid #e0dfd8;font-size:11px;color:#888780}
-.main{margin-left:220px;flex:1;min-height:100vh}
-.topbar{background:#fff;border-bottom:0.5px solid #e0dfd8;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
-.topbar-title{font-size:15px;font-weight:500;color:#1a1a18}
-.topbar-sub{font-size:12px;color:#888780;margin-top:1px}
-.topbar-actions{display:flex;gap:8px;align-items:center}
-.content{padding:24px 28px}
-/* ── Sayfalar ── */
-.page{display:none}.page.active{display:block}
-/* ── Kartlar ── */
-.card{background:#fff;border:0.5px solid #e0dfd8;border-radius:10px;padding:18px 20px;margin-bottom:14px}
-.card-title{font-size:12px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
-/* ── KPI Grid ── */
-.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
-.kpi-card{background:#fff;border:0.5px solid #e0dfd8;border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
-.kpi-card.green::before{background:#1D9E75}
-.kpi-card.blue::before{background:#185FA5}
-.kpi-card.amber::before{background:#BA7517}
-.kpi-card.red::before{background:#E24B4A}
-.kpi-card.purple::before{background:#534AB7}
-.kpi-label{font-size:11px;color:#888780;font-weight:500;margin-bottom:4px}
-.kpi-val{font-size:24px;font-weight:500;color:#1a1a18;line-height:1.1}
-.kpi-sub{font-size:11px;color:#b4b2a9;margin-top:3px}
-.kpi-trend{font-size:11px;font-weight:500;margin-top:5px}
-.t-up{color:#0F6E56}.t-dn{color:#A32D2D}.t-eq{color:#5f5e5a}
-/* ── Grid ── */
-.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-/* ── Bar ── */
-.bar-wrap{background:#f1efe8;border-radius:4px;height:8px;overflow:hidden;margin-top:4px}
-.bar-in{height:8px;border-radius:4px;transition:width .4s}
-/* ── Badge ── */
-.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
-.b-r{background:#FCEBEB;color:#791F1F}
-.b-y{background:#FAEEDA;color:#633806}
-.b-g{background:#EAF3DE;color:#27500A}
-.b-b{background:#E6F1FB;color:#0C447C}
-.b-p{background:#EEEDFE;color:#3C3489}
-/* ── Form elemanları ── */
-input[type=number],input[type=text],select{background:#fff;border:0.5px solid #d3d1c7;border-radius:6px;padding:5px 8px;font-size:13px;color:#1a1a18;outline:none;transition:border .15s;width:100%}
-input[type=number]:focus,input[type=text]:focus,select:focus{border-color:#888780}
-input[type=range]{accent-color:#1a1a18;width:100%}
-button{background:#fff;border:0.5px solid #d3d1c7;border-radius:6px;padding:6px 14px;font-size:13px;color:#1a1a18;cursor:pointer;transition:background .15s}
-button:hover{background:#f1efe8}
-button.primary{background:#1a1a18;color:#fff;border-color:#1a1a18}
-button.primary:hover{background:#2c2c2a}
-/* ── Tablo ── */
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{font-size:11px;font-weight:600;color:#888780;padding:6px 8px;text-align:left;border-bottom:0.5px solid #e0dfd8;white-space:nowrap}
-.tbl td{padding:7px 8px;border-bottom:0.5px solid #f1efe8;vertical-align:middle}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:#fafaf7}
-/* ── Uyarılar ── */
-.alert{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:8px;margin-bottom:6px;font-size:12px}
-.alert-r{background:#FCEBEB;color:#791F1F}
-.alert-y{background:#FAEEDA;color:#633806}
-.alert-g{background:#EAF3DE;color:#27500A}
-.alert-b{background:#E6F1FB;color:#0C447C}
-/* ── Gantt ── */
-.gantt-cell{border-radius:4px;padding:4px 5px;text-align:center;font-size:10px;font-weight:500;min-height:26px;display:flex;align-items:center;justify-content:center}
-.gc-toz{background:#E1F5EE;color:#085041}
-.gc-gran{background:#E6F1FB;color:#0C447C}
-.gc-elle{background:#FAEEDA;color:#633806}
-.gc-bos{background:#f1efe8;color:#b4b2a9}
-/* ── Divider ── */
-hr{border:none;border-top:0.5px solid #e0dfd8;margin:14px 0}
-/* ── Sayfa başlıkları ── */
-.page-header{margin-bottom:20px}
-.page-header h2{font-size:18px;font-weight:500;color:#1a1a18}
-.page-header p{font-size:13px;color:#888780;margin-top:3px}
-/* ── Sekme ── */
-.tab-bar{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;border-bottom:0.5px solid #e0dfd8;padding-bottom:8px}
-.tab-btn{font-size:12px;padding:5px 14px;border:0.5px solid transparent;border-radius:6px;background:transparent;color:#888780;cursor:pointer;transition:all .15s}
-.tab-btn:hover{background:#f1efe8;color:#1a1a18}
-.tab-btn.active{background:#f1efe8;color:#1a1a18;border-color:#d3d1c7;font-weight:500}
-.tab-panel{display:none}.tab-panel.active{display:block}
-/* ── Responsive ── */
-@media(max-width:768px){
-  .sidebar{width:100%;position:static;border-right:none;border-bottom:0.5px solid #e0dfd8}
-  .main{margin-left:0}
-  .app-shell{flex-direction:column}
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .grid2,.grid3{grid-template-columns:1fr}
-}
+  :root {
+    --bg: #ffffff; --bg2: #f5f4f0; --bg3: #eeece8;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --text: #1a1a18; --text2: #5a5a56; --text3: #8a8a84;
+    --success: #0f6e56; --success-bg: #e1f5ee;
+    --warning: #854f0b; --warning-bg: #faeeda;
+    --danger: #a32d2d; --danger-bg: #fcebeb;
+    --info: #185fa5; --info-bg: #e6f1fb;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#1e1e1c; --bg2:#2a2a28; --bg3:#323230;
+      --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+      --text:#e8e6e0; --text2:#a0a09a; --text3:#6a6a64;
+      --success:#5dcaa5; --success-bg:#04342c;
+      --warning:#ef9f27; --warning-bg:#412402;
+      --danger:#f09595; --danger-bg:#501313;
+      --info:#85b7eb; --info-bg:#042c53;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg3);color:var(--text);font-size:14px;line-height:1.5}
+  nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:4px;position:sticky;top:0;z-index:100;overflow-x:auto}
+  .nav-brand{font-size:14px;font-weight:500;padding:14px 16px 14px 0;border-right:0.5px solid var(--border);margin-right:8px;white-space:nowrap;flex-shrink:0}
+  .nav-tab{font-size:13px;padding:14px 14px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+  .nav-tab:hover{color:var(--text)}
+  .nav-tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+  .page{display:none;padding:20px;max-width:960px;margin:0 auto}
+  .page.active{display:block}
+  .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:14px}
+  .sec{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+  .kpi.g::before{background:#1d9e75}.kpi.b::before{background:#185fa5}
+  .kpi.y::before{background:#ba7517}.kpi.r::before{background:#e24b4a}.kpi.p::before{background:#534ab7}
+  .kpi-label{font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:500}
+  .kpi-val{font-size:22px;font-weight:500;line-height:1.1}
+  .kpi-sub{font-size:11px;color:var(--text3);margin-top:3px}
+  .kpi-trend{font-size:11px;font-weight:500;margin-top:4px}
+  .t-up{color:var(--success)}.t-dn{color:var(--danger)}.t-eq{color:var(--text2)}
+  .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .metric{background:var(--bg2);border-radius:var(--radius);padding:10px 12px}
+  .metric-label{font-size:11px;color:var(--text2);margin-bottom:3px}
+  .metric-val{font-size:20px;font-weight:500}
+  .metric-sub{font-size:11px;color:var(--text3);margin-top:2px}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+  .bg{background:var(--success-bg);color:var(--success)}
+  .by{background:var(--warning-bg);color:var(--warning)}
+  .br{background:var(--danger-bg);color:var(--danger)}
+  .bb{background:var(--info-bg);color:var(--info)}
+  .bar-wrap{background:var(--bg2);border-radius:4px;height:8px;overflow:hidden;margin-top:4px}
+  .bar-in{height:8px;border-radius:4px;transition:width .4s}
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .row label{width:200px;flex-shrink:0;color:var(--text2);font-size:12px}
+  .row input[type=range]{flex:1}
+  .row .vl{font-size:12px;font-weight:500;min-width:60px;text-align:right}
+  input[type=number],input[type=text],select{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);padding:5px 8px;font-size:12px;width:100%}
+  input[type=range]{accent-color:var(--text)}
+  button{background:transparent;border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);padding:5px 14px;font-size:12px;cursor:pointer;transition:background .15s}
+  button:hover{background:var(--bg2)}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{font-size:11px;font-weight:500;color:var(--text2);padding:5px 8px;text-align:left;border-bottom:0.5px solid var(--border);white-space:nowrap}
+  td{padding:6px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  hr{border:none;border-top:0.5px solid var(--border);margin:12px 0}
+  .alert{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:var(--radius);margin-bottom:6px;font-size:12px}
+  .ar{background:var(--danger-bg);color:var(--danger)}
+  .ay{background:var(--warning-bg);color:var(--warning)}
+  .ag{background:var(--success-bg);color:var(--success)}
+  .ab{background:var(--info-bg);color:var(--info)}
+  .gantt-cell{border-radius:4px;padding:4px 5px;text-align:center;font-size:11px;font-weight:500}
+  .gc-toz{background:#e1f5ee;color:#085041}.gc-gran{background:#e6f1fb;color:#0c447c}
+  .gc-elle{background:#faeeda;color:#633806}.gc-bos{background:var(--bg2);color:var(--text3)}
+  .bom-line{border-left:1.5px solid var(--border);margin-left:12px;padding-left:14px}
+  .sip-card{border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+  .sip-card.acil{border-color:#e24b4a;background:var(--danger-bg)}
+  .sip-card.dikkat{border-color:#ef9f27;background:var(--warning-bg)}
+  .sip-card.normal{border-color:#1d9e75;background:var(--success-bg)}
+  .flow-box{width:90px;border-radius:var(--radius);padding:8px 6px;text-align:center;border:0.5px solid var(--border);transition:all .3s}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .darb{animation:pulse 1.4s ease-in-out infinite;border-width:1.5px!important}
+  .kural{background:var(--bg2);border-left:3px solid var(--info);border-radius:0 var(--radius) var(--radius) 0;padding:8px 12px;margin-bottom:8px;font-size:13px}
+  @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="app-shell">
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <h1>Üretim Planlama</h1>
-    <p>Merkezi Yönetim Sistemi</p>
+<nav>
+  <span class="nav-brand">Üretim Planlama</span>
+  <button class="nav-tab active" onclick="goTo('kapasite',this)">1 · Kapasite</button>
+  <button class="nav-tab" onclick="goTo('mps',this)">2 · MPS Plan</button>
+  <button class="nav-tab" onclick="goTo('darbogaz',this)">3 · Darboğaz</button>
+  <button class="nav-tab" onclick="goTo('mrp',this)">4 · MRP</button>
+  <button class="nav-tab" onclick="goTo('dashboard',this)">5 · Dashboard</button>
+</nav>
+
+<!-- MODÜL 1: KAPASİTE -->
+<div id="page-kapasite" class="page active">
+  <div class="card">
+    <p class="sec">Vardiya & Kayıp Parametreleri</p>
+    <div class="row"><label>Günlük çalışma süresi (saat)</label><input type="range" id="k-saat" min="6" max="12" step="0.5" value="9" oninput="kapHesapla()"/><span class="vl" id="k-saat-v">9.0 sa</span></div>
+    <div class="row"><label>Haftada çalışma günü</label><input type="range" id="k-gun" min="1" max="7" step="1" value="5" oninput="kapHesapla()"/><span class="vl" id="k-gun-v">5 gün</span></div>
+    <div class="row"><label>Makine sayısı</label><input type="range" id="k-mak" min="1" max="8" step="1" value="3" oninput="kapHesapla()"/><span class="vl" id="k-mak-v">3 adet</span></div>
+    <div class="row"><label>Planlı duruş %</label><input type="range" id="k-planli" min="0" max="30" step="1" value="10" oninput="kapHesapla()"/><span class="vl" id="k-planli-v">%10</span></div>
+    <div class="row"><label>Plansız duruş %</label><input type="range" id="k-plansiz" min="0" max="20" step="1" value="5" oninput="kapHesapla()"/><span class="vl" id="k-plansiz-v">%5</span></div>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">Genel Bakış</div>
-    <button class="nav-item active" onclick="navigate('dashboard')">
-      <span class="nav-dot" style="background:#1D9E75"></span>Dashboard
-    </button>
-    <div class="nav-section">Planlama</div>
-    <button class="nav-item" onclick="navigate('kapasite')">
-      <span class="nav-dot" style="background:#185FA5"></span>Kapasite Analizi
-    </button>
-    <button class="nav-item" onclick="navigate('mps')">
-      <span class="nav-dot" style="background:#534AB7"></span>MPS Planlayıcı
-    </button>
-    <button class="nav-item" onclick="navigate('darbogaz')">
-      <span class="nav-dot" style="background:#E24B4A"></span>Darboğaz & OEE
-    </button>
-    <button class="nav-item" onclick="navigate('mrp')">
-      <span class="nav-dot" style="background:#BA7517"></span>MRP & Stok
-    </button>
-    <div class="nav-section">Sistem</div>
-    <button class="nav-item" onclick="navigate('ayarlar')">
-      <span class="nav-dot" style="background:#888780"></span>Ayarlar
-    </button>
-  </nav>
-  <div class="sidebar-footer">v1.0 · Üretim Planlama</div>
-</aside>
+  <div class="card">
+    <p class="sec">Günlük Kapasite</p>
+    <div class="g3">
+      <div class="metric"><p class="metric-label">Maksimum (teorik)</p><p class="metric-val" id="k-max">540</p><p class="metric-sub">dak/gün · makine başı</p></div>
+      <div class="metric"><p class="metric-label">Optimum (%85)</p><p class="metric-val" id="k-opt">459</p><p class="metric-sub">dak/gün · makine başı</p></div>
+      <div class="metric"><p class="metric-label">Net (duruşlar düşülmüş)</p><p class="metric-val" id="k-net">459</p><p class="metric-sub">dak/gün · makine başı</p></div>
+    </div>
+    <hr/>
+    <p class="sec">Haftalık Kapasite (Tüm Makineler)</p>
+    <div class="g3">
+      <div class="metric"><p class="metric-label">Toplam Maksimum</p><p class="metric-val" id="k-hmaks">8,100</p><p class="metric-sub">dak/hafta</p></div>
+      <div class="metric"><p class="metric-label">Toplam Optimum</p><p class="metric-val" id="k-hopt">6,885</p><p class="metric-sub">dak/hafta</p></div>
+      <div class="metric"><p class="metric-label">Toplam Net</p><p class="metric-val" id="k-hnet">6,885</p><p class="metric-sub">dak/hafta</p></div>
+    </div>
+  </div>
+  <div class="card">
+    <p class="sec">Ürün Hızları & Günlük Yük</p>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Ürün Grubu</th><th>Hız (adet/dak)</th><th>Günlük Hedef</th><th>Gereken Süre</th><th>Durum</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:500;color:#085041">Toz Dolum</td><td><input type="number" id="k-hz-toz" value="25" min="1" style="width:70px" oninput="kapHesapla()"/></td><td>10,000</td><td id="k-sure-toz">400 dak</td><td id="k-durum-toz"><span class="badge bg">OK</span></td></tr>
+        <tr><td style="font-weight:500;color:#0c447c">Granül Dolum</td><td><input type="number" id="k-hz-gran" value="18" min="1" style="width:70px" oninput="kapHesapla()"/></td><td>6,000</td><td id="k-sure-gran">333 dak</td><td id="k-durum-gran"><span class="badge bg">OK</span></td></tr>
+        <tr><td style="font-weight:500;color:#633806">Elle Dolum</td><td><input type="number" id="k-hz-elle" value="4" min="1" style="width:70px" oninput="kapHesapla()"/></td><td>500</td><td id="k-sure-elle">125 dak</td><td id="k-durum-elle"><span class="badge bg">OK</span></td></tr>
+      </tbody>
+    </table></div>
+    <hr/>
+    <div class="g2" style="margin-top:8px">
+      <div class="metric"><p class="metric-label">Toplam Gereken Süre</p><p class="metric-val" id="k-top-sure">858</p><p class="metric-sub">dak/gün</p></div>
+      <div class="metric"><p class="metric-label">Toplam Net Kapasite</p><p class="metric-val" id="k-top-kap">1,377</p><p class="metric-sub">dak/gün (tüm makineler)</p></div>
+    </div>
+    <div id="k-uyari" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <p class="sec">Senaryo Karşılaştırması</p>
+    <div class="g3">
+      <div class="metric" style="border:0.5px solid var(--border)"><p class="metric-label">Mevcut (1 vardiya · 5 gün)</p><p class="metric-val" id="sc-a">—</p><p class="metric-sub">dak/hafta</p></div>
+      <div class="metric" style="border:0.5px solid var(--info)"><p class="metric-label">+1 Gün (6 gün)</p><p class="metric-val" id="sc-b">—</p><p class="metric-sub">dak/hafta</p></div>
+      <div class="metric" style="border:0.5px solid var(--success)"><p class="metric-label">2. Vardiya</p><p class="metric-val" id="sc-c">—</p><p class="metric-sub">dak/hafta</p></div>
+    </div>
+  </div>
+</div>
 
-<!-- MAIN -->
-<main class="main">
-  <div class="topbar">
+<!-- MODÜL 2: MPS -->
+<div id="page-mps" class="page">
+  <div class="card">
+    <p class="sec">Haftalık Talep & Üretim Parametreleri</p>
+    <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--text3);font-weight:600">ÜRÜN</span>
+      <span style="font-size:11px;color:var(--text3);font-weight:600">HIZ (adet/dak)</span>
+      <span style="font-size:11px;color:var(--text3);font-weight:600">HAFTALIK TALEP</span>
+      <span style="font-size:11px;color:var(--text3);font-weight:600">ÖNCELİK</span>
+    </div>
+    <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px">
+      <span style="font-weight:500;color:#085041;font-size:13px">Toz Dolum</span>
+      <input type="number" id="m-hz-toz" value="25" min="1" oninput="mpsHesapla()"/>
+      <input type="number" id="m-talep-toz" value="50000" min="0" oninput="mpsHesapla()"/>
+      <select id="m-onc-toz" onchange="mpsHesapla()"><option value="1">Yüksek</option><option value="2" selected>Orta</option><option value="3">Düşük</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px">
+      <span style="font-weight:500;color:#0c447c;font-size:13px">Granül Dolum</span>
+      <input type="number" id="m-hz-gran" value="18" min="1" oninput="mpsHesapla()"/>
+      <input type="number" id="m-talep-gran" value="30000" min="0" oninput="mpsHesapla()"/>
+      <select id="m-onc-gran" onchange="mpsHesapla()"><option value="1">Yüksek</option><option value="2" selected>Orta</option><option value="3">Düşük</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;align-items:center">
+      <span style="font-weight:500;color:#633806;font-size:13px">Elle Dolum</span>
+      <input type="number" id="m-hz-elle" value="4" min="1" oninput="mpsHesapla()"/>
+      <input type="number" id="m-talep-elle" value="2500" min="0" oninput="mpsHesapla()"/>
+      <select id="m-onc-elle" onchange="mpsHesapla()"><option value="1">Yüksek</option><option value="2">Orta</option><option value="3" selected>Düşük</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <p class="sec">Haftalık MPS Çıktısı</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ürün</th><th>Haftalık Talep</th><th>Gerekli Süre (dak)</th><th>Kaç Gün</th><th>Günlük Adet</th><th>Durum</th></tr></thead><tbody id="mps-tbody"></tbody></table></div>
+  </div>
+  <div class="card">
+    <p class="sec">Gantt — Haftalık Makine Planı</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>Makine</th><th>Pzt</th><th>Sal</th><th>Çar</th><th>Per</th><th>Cum</th></tr></thead><tbody id="gantt-body"></tbody></table></div>
+    <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;font-size:11px">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#1d9e75;display:inline-block"></span>Toz Dolum</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#185fa5;display:inline-block"></span>Granül Dolum</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#ba7517;display:inline-block"></span>Elle Dolum</span>
+    </div>
+  </div>
+  <div class="card">
+    <p class="sec">Stok & Yeniden Sipariş Noktası (ROP)</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ürün</th><th>Mevcut Stok</th><th>Güv. Stok</th><th>Tedarik (gün)</th><th>ROP</th><th>Durum</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:500;color:#085041">Toz Dolum</td><td><input type="number" id="s-stok-toz" value="15000" style="width:90px" oninput="mpsHesapla()"/></td><td><input type="number" id="s-guv-toz" value="5000" style="width:80px" oninput="mpsHesapla()"/></td><td><input type="number" id="s-ted-toz" value="2" min="1" max="30" style="width:60px" oninput="mpsHesapla()"/></td><td id="s-rop-toz" style="font-weight:500">—</td><td id="s-durum-toz">—</td></tr>
+      <tr><td style="font-weight:500;color:#0c447c">Granül Dolum</td><td><input type="number" id="s-stok-gran" value="8000" style="width:90px" oninput="mpsHesapla()"/></td><td><input type="number" id="s-guv-gran" value="3000" style="width:80px" oninput="mpsHesapla()"/></td><td><input type="number" id="s-ted-gran" value="2" min="1" max="30" style="width:60px" oninput="mpsHesapla()"/></td><td id="s-rop-gran" style="font-weight:500">—</td><td id="s-durum-gran">—</td></tr>
+      <tr><td style="font-weight:500;color:#633806">Elle Dolum</td><td><input type="number" id="s-stok-elle" value="1000" style="width:90px" oninput="mpsHesapla()"/></td><td><input type="number" id="s-guv-elle" value="300" style="width:80px" oninput="mpsHesapla()"/></td><td><input type="number" id="s-ted-elle" value="1" min="1" max="30" style="width:60px" oninput="mpsHesapla()"/></td><td id="s-rop-elle" style="font-weight:500">—</td><td id="s-durum-elle">—</td></tr>
+    </tbody></table></div>
+  </div>
+  <div class="card">
+    <p class="sec">Planlama Kuralları</p>
+    <div class="kural">Kural 1 — Önceliğe göre sırala: Yüksek öncelikli ürünü haftanın başına al.</div>
+    <div class="kural">Kural 2 — Batch büyüklüğü: Setup maliyeti yüksekse büyük partiler daha verimli.</div>
+    <div class="kural">Kural 3 — Tampon stok: Günlük talebin %20-30'u kadar güvenlik stoğu tut.</div>
+    <div class="kural">Kural 4 — Darboğaz önce: En uzun süren ürünü sabah başlat.</div>
+  </div>
+</div>
+
+<!-- MODÜL 3: DARBOĞAZ -->
+<div id="page-darbogaz" class="page">
+  <div class="card">
+    <p class="sec">İstasyon Kapasiteleri</p>
+    <div style="display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--text3);font-weight:600">İSTASYON</span>
+      <span style="font-size:11px;color:var(--text3);font-weight:600">KAPASİTE (adet/saat)</span>
+      <span style="font-size:11px;color:var(--text3);font-weight:600">TALEP (adet/saat)</span>
+      <span style="font-size:11px;color:var(--text3);font-weight:600">KULLANIM</span>
+    </div>
+    <div id="istasyon-rows">
+      <div class="ist-row" style="display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:8px"><input type="text" value="Hammadde Hazırlık" oninput="dbHesapla()"/><input type="number" class="ist-kap" value="1800" min="1" oninput="dbHesapla()"/><input type="number" class="ist-talep" value="1200" min="1" oninput="dbHesapla()"/><span class="ist-kul" style="font-size:13px;font-weight:500">—</span></div>
+      <div class="ist-row" style="display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:8px"><input type="text" value="Toz Dolum Mak." oninput="dbHesapla()"/><input type="number" class="ist-kap" value="1500" min="1" oninput="dbHesapla()"/><input type="number" class="ist-talep" value="1400" min="1" oninput="dbHesapla()"/><span class="ist-kul" style="font-size:13px;font-weight:500">—</span></div>
+      <div class="ist-row" style="display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:8px"><input type="text" value="Granül Dolum Mak." oninput="dbHesapla()"/><input type="number" class="ist-kap" value="1080" min="1" oninput="dbHesapla()"/><input type="number" class="ist-talep" value="1080" min="1" oninput="dbHesapla()"/><span class="ist-kul" style="font-size:13px;font-weight:500">—</span></div>
+      <div class="ist-row" style="display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:8px"><input type="text" value="Elle Dolum" oninput="dbHesapla()"/><input type="number" class="ist-kap" value="240" min="1" oninput="dbHesapla()"/><input type="number" class="ist-talep" value="200" min="1" oninput="dbHesapla()"/><span class="ist-kul" style="font-size:13px;font-weight:500">—</span></div>
+      <div class="ist-row" style="display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:8px"><input type="text" value="Etiketleme/Kap." oninput="dbHesapla()"/><input type="number" class="ist-kap" value="2000" min="1" oninput="dbHesapla()"/><input type="number" class="ist-talep" value="1200" min="1" oninput="dbHesapla()"/><span class="ist-kul" style="font-size:13px;font-weight:500">—</span></div>
+    </div>
+    <button onclick="istEkle()" style="margin-top:4px">+ İstasyon ekle</button>
+  </div>
+  <div class="card">
+    <p class="sec">Akış Görünümü</p>
+    <div style="overflow-x:auto;padding:4px 0" id="flow-wrap"></div>
+    <div id="flow-uyari" style="margin-top:8px"></div>
+  </div>
+  <div class="card"><p class="sec">Kapasite Kullanım Oranları</p><div id="db-bar-chart"></div></div>
+  <div class="card"><p class="sec">5 Adımlı TOC Süreci</p><div id="toc-adimlar"></div></div>
+  <div class="card">
+    <p class="sec">OEE = Kullanılabilirlik × Performans × Kalite</p>
+    <div class="row"><label>Kullanılabilirlik %</label><input type="range" id="oee-a" min="50" max="100" value="85" oninput="oeeHesapla()"/><span class="vl" id="oee-a-v">%85</span></div>
+    <div class="row"><label>Performans %</label><input type="range" id="oee-p" min="50" max="100" value="90" oninput="oeeHesapla()"/><span class="vl" id="oee-p-v">%90</span></div>
+    <div class="row"><label>Kalite %</label><input type="range" id="oee-q" min="50" max="100" value="95" oninput="oeeHesapla()"/><span class="vl" id="oee-q-v">%95</span></div>
+    <hr/>
+    <div class="g3">
+      <div class="metric"><p class="metric-label">OEE Skoru</p><p class="metric-val" id="oee-skor">—</p><p class="metric-sub" id="oee-seviye">—</p></div>
+      <div class="metric"><p class="metric-label">Kayıp Kapasite</p><p class="metric-val" id="oee-kayip">—</p><p class="metric-sub">dak/gün</p></div>
+      <div class="metric"><p class="metric-label">Kurtarılabilir Adet</p><p class="metric-val" id="oee-kurtar">—</p><p class="metric-sub">adet/gün potansiyel</p></div>
+    </div>
+    <div id="oee-yorum" style="margin-top:10px;font-size:12px;color:var(--text2)"></div>
+  </div>
+  <div class="card"><p class="sec">Çözüm Senaryoları</p><div id="db-senaryolar"></div></div>
+</div>
+
+<!-- MODÜL 4: MRP -->
+<div id="page-mrp" class="page">
+  <div class="card">
+    <p class="sec">BOM — Ürün Ağacı (1 adet üretmek için)</p>
+    <div style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:8px;font-size:11px;color:var(--text3);font-weight:600"><span>MALZEME</span><span>MİKTAR</span><span>BİRİM</span><span>TED.GÜN</span></div>
+    <div style="margin-bottom:14px">
+      <p style="font-size:13px;font-weight:500;color:#085041;margin-bottom:8px">Toz Dolum</p>
+      <div class="bom-line">
+        <div id="bom-toz-rows">
+          <div class="bom-row" style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center"><input type="text" value="Toz Hammadde" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="0.05" step="0.001" min="0" oninput="mrpHesapla()"/><input type="text" value="kg" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="3" min="1" max="60" oninput="mrpHesapla()"/></div>
+          <div class="bom-row" style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center"><input type="text" value="Ambalaj (kutu)" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="1" step="1" min="0" oninput="mrpHesapla()"/><input type="text" value="adet" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="5" min="1" max="60" oninput="mrpHesapla()"/></div>
+          <div class="bom-row" style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center"><input type="text" value="Etiket" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="1" step="1" min="0" oninput="mrpHesapla()"/><input type="text" value="adet" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="2" min="1" max="60" oninput="mrpHesapla()"/></div>
+        </div>
+        <button onclick="bomEkle('toz')" style="font-size:11px;padding:3px 10px">+ Malzeme ekle</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <p style="font-size:13px;font-weight:500;color:#0c447c;margin-bottom:8px">Granül Dolum</p>
+      <div class="bom-line">
+        <div id="bom-gran-rows">
+          <div class="bom-row" style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center"><input type="text" value="Granül Hammadde" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="0.08" step="0.001" min="0" oninput="mrpHesapla()"/><input type="text" value="kg" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="4" min="1" max="60" oninput="mrpHesapla()"/></div>
+          <div class="bom-row" style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center"><input type="text" value="Ambalaj (torba)" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="1" step="1" min="0" oninput="mrpHesapla()"/><input type="text" value="adet" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="5" min="1" max="60" oninput="mrpHesapla()"/></div>
+        </div>
+        <button onclick="bomEkle('gran')" style="font-size:11px;padding:3px 10px">+ Malzeme ekle</button>
+      </div>
+    </div>
     <div>
-      <div class="topbar-title" id="topbar-title">Dashboard</div>
-      <div class="topbar-sub" id="topbar-date"></div>
-    </div>
-    <div class="topbar-actions">
-      <span id="topbar-badge" class="badge b-g">Sistem Normal</span>
-      <button onclick="navigate('ayarlar')">Ayarlar</button>
+      <p style="font-size:13px;font-weight:500;color:#633806;margin-bottom:8px">Elle Dolum</p>
+      <div class="bom-line">
+        <div id="bom-elle-rows">
+          <div class="bom-row" style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center"><input type="text" value="Karışım Hammadde" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="0.12" step="0.001" min="0" oninput="mrpHesapla()"/><input type="text" value="kg" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="3" min="1" max="60" oninput="mrpHesapla()"/></div>
+          <div class="bom-row" style="display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center"><input type="text" value="Ambalaj (şişe)" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="1" step="1" min="0" oninput="mrpHesapla()"/><input type="text" value="adet" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="4" min="1" max="60" oninput="mrpHesapla()"/></div>
+        </div>
+        <button onclick="bomEkle('elle')" style="font-size:11px;padding:3px 10px">+ Malzeme ekle</button>
+      </div>
     </div>
   </div>
-
-  <div class="content">
-
-    <!-- ══════════ DASHBOARD ══════════ -->
-    <div id="page-dashboard" class="page active">
-      <div class="page-header">
-        <h2>Genel Bakış</h2>
-        <p>Tüm üretim göstergelerinin özeti</p>
-      </div>
-      <div class="kpi-grid">
-        <div class="kpi-card green"><p class="kpi-label">Haftalık Üretim Hedefi</p><p class="kpi-val" id="d-uretim">—</p><p class="kpi-sub">toplam adet</p><p class="kpi-trend t-up" id="d-uretim-t">—</p></div>
-        <div class="kpi-card blue"><p class="kpi-label">Kapasite Kullanımı</p><p class="kpi-val" id="d-kap">—</p><p class="kpi-sub">optimum: %80–85</p><p class="kpi-trend" id="d-kap-t">—</p></div>
-        <div class="kpi-card amber"><p class="kpi-label">OEE Skoru</p><p class="kpi-val" id="d-oee">—</p><p class="kpi-sub">hedef: %85+</p><p class="kpi-trend" id="d-oee-t">—</p></div>
-        <div class="kpi-card red"><p class="kpi-label">Açık Uyarılar</p><p class="kpi-val" id="d-uyari">—</p><p class="kpi-sub">aksiyon bekliyor</p><p class="kpi-trend t-dn" id="d-uyari-t">—</p></div>
-      </div>
-      <div class="grid2">
-        <div class="card"><p class="card-title">Ürün Grubu Yükü</p><div id="d-urun-yuk"></div></div>
-        <div class="card"><p class="card-title">Kapasite Göstergesi</p><div id="d-kap-gauge"></div><hr/><div id="d-kap-ozet"></div></div>
-      </div>
-      <div class="card"><p class="card-title">Uyarı & Aksiyon Listesi</p><div id="d-uyari-feed"></div></div>
-      <div class="card"><p class="card-title">OEE Bileşen Analizi</p><div id="d-oee-analiz"></div></div>
+  <div class="card">
+    <p class="sec">Üretim Hedefleri (MPS'ten)</p>
+    <div class="g3">
+      <div><label style="font-size:12px;color:var(--text2)">Toz Dolum (adet/hafta)</label><input type="number" id="mrp-mps-toz" value="50000" style="margin-top:4px" oninput="mrpHesapla()"/></div>
+      <div><label style="font-size:12px;color:var(--text2)">Granül Dolum (adet/hafta)</label><input type="number" id="mrp-mps-gran" value="30000" style="margin-top:4px" oninput="mrpHesapla()"/></div>
+      <div><label style="font-size:12px;color:var(--text2)">Elle Dolum (adet/hafta)</label><input type="number" id="mrp-mps-elle" value="2500" style="margin-top:4px" oninput="mrpHesapla()"/></div>
     </div>
+  </div>
+  <div class="card">
+    <p class="sec">Brüt & Net İhtiyaç Hesabı</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Net İhtiyaç = Brüt − Mevcut Stok − Siparişteki + Güvenlik Stoğu</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>Malzeme</th><th>Brüt İhtiyaç</th><th>Mevcut Stok</th><th>Siparişteki</th><th>Güv. Stok</th><th>Net İhtiyaç</th><th>Sipariş Miktarı</th><th>Durum</th></tr></thead><tbody id="mrp-tbody"></tbody></table></div>
+  </div>
+  <div class="card"><p class="sec">Stok Düzenleme</p><div id="mrp-stok-giris"></div></div>
+  <div class="card"><p class="sec">4 Haftalık Sipariş Takvimi</p><div style="overflow-x:auto" id="mrp-zaman"></div></div>
+  <div class="card"><p class="sec">Açık Sipariş Listesi</p><div id="mrp-siparis"></div></div>
+</div>
 
-    <!-- ══════════ KAPASİTE ══════════ -->
-    <div id="page-kapasite" class="page">
-      <div class="page-header"><h2>Kapasite Analizi</h2><p>Maksimum, optimum ve net üretim kapasitesi hesabı</p></div>
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('kap','analiz',this)">Kapasite Analizi</button>
-        <button class="tab-btn" onclick="switchTab('kap','urun',this)">Ürün Yükü</button>
-        <button class="tab-btn" onclick="switchTab('kap','senaryo',this)">Senaryo Karşılaştırma</button>
-      </div>
-      <div id="kap-tab-analiz" class="tab-panel active">
-        <div class="card">
-          <p class="card-title">Vardiya Parametreleri</p>
-          <div id="kap-sliders"></div>
-        </div>
-        <div class="card"><p class="card-title">Günlük & Haftalık Kapasite</p><div id="kap-sonuclar"></div></div>
-        <div class="card"><p class="card-title">Kapasite Görselleştirme</p><div id="kap-barlar"></div></div>
-      </div>
-      <div id="kap-tab-urun" class="tab-panel">
-        <div class="card">
-          <p class="card-title">Ürün Başına Süre (adet/dakika)</p>
-          <div id="kap-urun-tablo"></div>
-          <hr/>
-          <div id="kap-urun-ozet"></div>
-        </div>
-      </div>
-      <div id="kap-tab-senaryo" class="tab-panel">
-        <div class="card"><p class="card-title">Senaryo Karşılaştırması</p><div id="kap-senaryo"></div></div>
-      </div>
+<!-- MODÜL 5: DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div><p style="font-size:16px;font-weight:500">Üretim Planlama Merkezi</p><p style="font-size:12px;color:var(--text3)" id="dash-tarih">—</p></div>
+    <div style="display:flex;gap:4px">
+      <button id="vbtn-yonetim" onclick="dashView('yonetim')" style="font-weight:500;background:var(--bg2)">Yönetim</button>
+      <button id="vbtn-uretim" onclick="dashView('uretim')">Üretim Şefi</button>
+      <button id="vbtn-ayarlar" onclick="dashView('ayarlar')">Ayarlar</button>
     </div>
-
-    <!-- ══════════ MPS ══════════ -->
-    <div id="page-mps" class="page">
-      <div class="page-header"><h2>MPS — Ana Üretim Planı</h2><p>Hangi ürünü, ne zaman, kaç adet üretelim?</p></div>
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('mps','giris',this)">Parametreler</button>
-        <button class="tab-btn" onclick="switchTab('mps','plan',this)">Haftalık Plan</button>
-        <button class="tab-btn" onclick="switchTab('mps','gantt',this)">Gantt Görünümü</button>
-        <button class="tab-btn" onclick="switchTab('mps','stok',this)">Stok & ROP</button>
-      </div>
-      <div id="mps-tab-giris" class="tab-panel active">
-        <div class="card"><p class="card-title">Ürün Hedefleri & Hızlar</p><div id="mps-giris-icerik"></div></div>
-        <div class="card"><p class="card-title">Kapasite Özet</p><div id="mps-ozet"></div></div>
-      </div>
-      <div id="mps-tab-plan" class="tab-panel">
-        <div class="card"><p class="card-title">Haftalık Üretim Planı (MPS Çıktısı)</p><div id="mps-plan-tablo"></div></div>
-        <div class="card"><p class="card-title">Planlama Kuralları</p><div id="mps-kurallar"></div></div>
-      </div>
-      <div id="mps-tab-gantt" class="tab-panel">
-        <div class="card"><p class="card-title">Gantt Çizelgesi</p><div id="mps-gantt-icerik" style="overflow-x:auto"></div></div>
-        <div class="card"><p class="card-title">Makine Yük Özeti</p><div id="mps-mak-ozet"></div></div>
-      </div>
-      <div id="mps-tab-stok" class="tab-panel">
-        <div class="card"><p class="card-title">Stok & Yeniden Sipariş Noktası (ROP)</p><div id="mps-stok-icerik"></div></div>
-      </div>
+  </div>
+  <!-- YÖNETİM -->
+  <div id="dv-yonetim">
+    <div class="kpi-grid">
+      <div class="kpi g"><p class="kpi-label">Haftalık Hedef</p><p class="kpi-val" id="d-uretim">82,500</p><p class="kpi-sub">adet / hafta</p></div>
+      <div class="kpi b"><p class="kpi-label">Kapasite Kullanımı</p><p class="kpi-val" id="d-kap">—</p><p class="kpi-sub">optimum: %80-85</p><div id="d-kap-t"></div></div>
+      <div class="kpi y"><p class="kpi-label">OEE Skoru</p><p class="kpi-val" id="d-oee">—</p><p class="kpi-sub">hedef: %85+</p><div id="d-oee-t"></div></div>
+      <div class="kpi r"><p class="kpi-label">Açık Uyarılar</p><p class="kpi-val" id="d-uyari">—</p><p class="kpi-sub">aksiyon bekliyor</p><div id="d-uyari-t"></div></div>
     </div>
-
-    <!-- ══════════ DARBOĞAZ ══════════ -->
-    <div id="page-darbogaz" class="page">
-      <div class="page-header"><h2>Darboğaz Analizi & OEE</h2><p>Kısıtlar Teorisi ile sistem darboğazını tespit et ve iyileştir</p></div>
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('db','akis',this)">Akış Analizi</button>
-        <button class="tab-btn" onclick="switchTab('db','toc',this)">TOC Adımları</button>
-        <button class="tab-btn" onclick="switchTab('db','oee',this)">OEE Hesaplama</button>
-        <button class="tab-btn" onclick="switchTab('db','cozum',this)">Çözüm Senaryoları</button>
-      </div>
-      <div id="db-tab-akis" class="tab-panel active">
-        <div class="card"><p class="card-title">İstasyon Kapasiteleri</p><div id="db-istasyonlar"></div><button style="margin-top:8px;font-size:12px" onclick="dbIstasyonEkle()">+ İstasyon ekle</button></div>
-        <div class="card"><p class="card-title">Akış Görünümü & Darboğaz</p><div id="db-akis"></div></div>
-        <div class="card"><p class="card-title">Kapasite Kullanım Oranları</p><div id="db-barlar"></div></div>
-      </div>
-      <div id="db-tab-toc" class="tab-panel">
-        <div class="card"><p class="card-title">5 Adımlı TOC Süreci</p><div id="db-toc-adimlar"></div></div>
-        <div class="card"><p class="card-title">Önceliklendirme Matrisi</p><div id="db-matris"></div></div>
-      </div>
-      <div id="db-tab-oee" class="tab-panel">
-        <div class="card">
-          <p class="card-title">OEE = Kullanılabilirlik × Performans × Kalite</p>
-          <div id="db-oee-sliders"></div>
-          <hr/>
-          <div id="db-oee-sonuc"></div>
-        </div>
-        <div class="card"><p class="card-title">OEE Kayıp Ağacı</p><div id="db-oee-agac"></div></div>
-      </div>
-      <div id="db-tab-cozum" class="tab-panel">
-        <div class="card"><p class="card-title">Çözüm Senaryoları (Maliyete Göre Sıralı)</p><div id="db-cozumler"></div></div>
-      </div>
+    <div class="g2">
+      <div class="card"><p class="sec">Ürün Grubu Performansı</p><div id="d-urun-perf"></div></div>
+      <div class="card"><p class="sec">Kapasite Göstergesi</p><div style="display:flex;justify-content:center" id="d-gauge"></div><hr/><p class="sec">Haftalık Özet</p><div id="d-kap-ozet"></div></div>
     </div>
-
-    <!-- ══════════ MRP ══════════ -->
-    <div id="page-mrp" class="page">
-      <div class="page-header"><h2>MRP — Malzeme İhtiyaç Planlaması</h2><p>BOM, net ihtiyaç hesabı ve sipariş takvimi</p></div>
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('mrp','bom',this)">BOM Ürün Ağacı</button>
-        <button class="tab-btn" onclick="switchTab('mrp','hesap',this)">MRP Hesaplama</button>
-        <button class="tab-btn" onclick="switchTab('mrp','zaman',this)">Sipariş Takvimi</button>
-        <button class="tab-btn" onclick="switchTab('mrp','siparis',this)">Sipariş Listesi</button>
-      </div>
-      <div id="mrp-tab-bom" class="tab-panel active"><div class="card"><p class="card-title">Ürün Ağacı (Bill of Materials)</p><div id="mrp-bom-icerik"></div></div></div>
-      <div id="mrp-tab-hesap" class="tab-panel"><div class="card"><p class="card-title">Brüt & Net İhtiyaç Hesabı</p><div id="mrp-hesap-icerik"></div></div></div>
-      <div id="mrp-tab-zaman" class="tab-panel"><div class="card"><p class="card-title">4 Haftalık Sipariş Takvimi</p><div id="mrp-zaman-icerik"></div></div></div>
-      <div id="mrp-tab-siparis" class="tab-panel"><div class="card"><p class="card-title">Açık Sipariş Listesi</p><div id="mrp-siparis-icerik"></div></div></div>
+    <div class="card"><p class="sec">Uyarı & Aksiyon Listesi</p><div id="d-uyari-feed"></div></div>
+    <div class="card"><p class="sec">OEE Bileşen Analizi</p><div id="d-oee-analiz"></div></div>
+  </div>
+  <!-- ÜRETİM ŞEFİ -->
+  <div id="dv-uretim" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi g"><p class="kpi-label">Bugünkü Hedef</p><p class="kpi-val" id="d-bugun-hedef">—</p><p class="kpi-sub">toplam adet</p></div>
+      <div class="kpi b"><p class="kpi-label">Gereken Süre</p><p class="kpi-val" id="d-bugun-sure">—</p><p class="kpi-sub">dakika</p><div id="d-bugun-sure-t"></div></div>
+      <div class="kpi p"><p class="kpi-label">Darboğaz</p><p class="kpi-val" id="d-darb" style="font-size:14px">—</p><p class="kpi-sub">en yüksek yük</p></div>
+      <div class="kpi y"><p class="kpi-label">Kalan Kapasite</p><p class="kpi-val" id="d-kalan">—</p><p class="kpi-sub">dak/gün</p><div id="d-kalan-t"></div></div>
     </div>
-
-    <!-- ══════════ AYARLAR ══════════ -->
-    <div id="page-ayarlar" class="page">
-      <div class="page-header"><h2>Ayarlar</h2><p>Tüm sistem parametrelerini buradan yönet</p></div>
-      <div class="grid2">
-        <div class="card">
-          <p class="card-title">Kapasite Parametreleri</p>
-          <div style="margin-bottom:10px"><label style="font-size:12px;color:#888780;display:block;margin-bottom:4px">Günlük net üretim (dak/makine)</label><input type="range" id="ay-net" min="300" max="540" step="10" value="459" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500" id="ay-net-v">459 dak</span></div>
-          <div style="margin-bottom:10px"><label style="font-size:12px;color:#888780;display:block;margin-bottom:4px">Makine sayısı</label><input type="range" id="ay-mak" min="1" max="6" step="1" value="3" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500" id="ay-mak-v">3 makine</span></div>
-          <div><label style="font-size:12px;color:#888780;display:block;margin-bottom:4px">Çalışma günü / hafta</label><input type="range" id="ay-gun" min="1" max="7" step="1" value="5" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500" id="ay-gun-v">5 gün</span></div>
-        </div>
-        <div class="card">
-          <p class="card-title">OEE Bileşenleri</p>
-          <div style="margin-bottom:10px"><label style="font-size:12px;color:#888780;display:block;margin-bottom:4px">Kullanılabilirlik (Availability)</label><input type="range" id="ay-oee-a" min="50" max="100" value="85" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500" id="ay-oee-a-v">%85</span></div>
-          <div style="margin-bottom:10px"><label style="font-size:12px;color:#888780;display:block;margin-bottom:4px">Performans</label><input type="range" id="ay-oee-p" min="50" max="100" value="90" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500" id="ay-oee-p-v">%90</span></div>
-          <div><label style="font-size:12px;color:#888780;display:block;margin-bottom:4px">Kalite</label><input type="range" id="ay-oee-q" min="50" max="100" value="95" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500" id="ay-oee-q-v">%95</span></div>
-        </div>
-      </div>
-      <div class="card">
-        <p class="card-title">Ürün Parametreleri</p>
-        <div style="overflow-x:auto">
-          <table class="tbl" style="min-width:500px">
-            <thead><tr><th>Ürün</th><th>Hız (adet/dak)</th><th>Haftalık Hedef</th><th>Güv. Stok</th><th>Mevcut Stok</th></tr></thead>
-            <tbody>
-              <tr>
-                <td style="font-weight:500;color:#085041">Toz Dolum</td>
-                <td><input type="number" id="ay-hz-toz" value="25" min="1" style="width:80px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-ht-toz" value="50000" min="0" style="width:100px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-gs-toz" value="5000" min="0" style="width:90px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-stok-toz" value="15000" min="0" style="width:100px" oninput="ayarGuncelle()"/></td>
-              </tr>
-              <tr>
-                <td style="font-weight:500;color:#0C447C">Granül Dolum</td>
-                <td><input type="number" id="ay-hz-gran" value="18" min="1" style="width:80px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-ht-gran" value="30000" min="0" style="width:100px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-gs-gran" value="3000" min="0" style="width:90px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-stok-gran" value="4000" min="0" style="width:100px" oninput="ayarGuncelle()"/></td>
-              </tr>
-              <tr>
-                <td style="font-weight:500;color:#633806">Elle Dolum</td>
-                <td><input type="number" id="ay-hz-elle" value="4" min="1" style="width:80px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-ht-elle" value="2500" min="0" style="width:100px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-gs-elle" value="300" min="0" style="width:90px" oninput="ayarGuncelle()"/></td>
-                <td><input type="number" id="ay-stok-elle" value="800" min="0" style="width:100px" oninput="ayarGuncelle()"/></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card" style="background:#EAF3DE;border-color:#C0DD97">
-        <p style="font-size:13px;font-weight:500;color:#27500A;margin-bottom:4px">✓ Ayarlar otomatik kaydediliyor</p>
-        <p style="font-size:12px;color:#3B6D11">Tüm değişiklikler anında tüm modüllere yansır. Sayfa yenilendiğinde değerler sıfırlanır — ilerleyen sürümde localStorage ile kalıcı hale getirilecek.</p>
-      </div>
+    <div class="card"><p class="sec">Haftalık Üretim Sırası</p><div id="d-shift"></div></div>
+    <div class="card"><p class="sec">Makine Yük Durumu</p><div id="d-mak-yuk"></div></div>
+    <div class="card"><p class="sec">Stok Kritik Uyarıları</p><div id="d-stok-uyari"></div></div>
+  </div>
+  <!-- AYARLAR -->
+  <div id="dv-ayarlar" style="display:none">
+    <div class="card">
+      <p class="sec">Kapasite</p>
+      <div class="row"><label>Günlük net üretim (dak/makine)</label><input type="range" id="d-net" min="300" max="540" step="10" value="459" oninput="dashGuncelle()"/><span class="vl" id="d-net-v">459</span></div>
+      <div class="row"><label>Makine sayısı</label><input type="range" id="d-mak" min="1" max="6" value="3" oninput="dashGuncelle()"/><span class="vl" id="d-mak-v">3</span></div>
+      <div class="row"><label>Çalışma günü / hafta</label><input type="range" id="d-gun" min="1" max="7" value="5" oninput="dashGuncelle()"/><span class="vl" id="d-gun-v">5</span></div>
     </div>
-
-  </div><!-- /content -->
-</main>
-</div><!-- /app-shell -->
+    <div class="card">
+      <p class="sec">Ürün Parametreleri</p>
+      <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text3);font-weight:600"><span>ÜRÜN</span><span>HIZ</span><span>HAFTALIK HEDEF</span><span>GÜV. STOK</span></div>
+      <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:500;color:#085041">Toz Dolum</span><input type="number" id="d-hz-toz" value="25" min="1" oninput="dashGuncelle()"/><input type="number" id="d-ht-toz" value="50000" oninput="dashGuncelle()"/><input type="number" id="d-gs-toz" value="5000" oninput="dashGuncelle()"/></div>
+      <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:500;color:#0c447c">Granül Dolum</span><input type="number" id="d-hz-gran" value="18" min="1" oninput="dashGuncelle()"/><input type="number" id="d-ht-gran" value="30000" oninput="dashGuncelle()"/><input type="number" id="d-gs-gran" value="3000" oninput="dashGuncelle()"/></div>
+      <div style="display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:8px;align-items:center"><span style="font-size:12px;font-weight:500;color:#633806">Elle Dolum</span><input type="number" id="d-hz-elle" value="4" min="1" oninput="dashGuncelle()"/><input type="number" id="d-ht-elle" value="2500" oninput="dashGuncelle()"/><input type="number" id="d-gs-elle" value="300" oninput="dashGuncelle()"/></div>
+    </div>
+    <div class="card">
+      <p class="sec">OEE Bileşenleri</p>
+      <div class="row"><label>Kullanılabilirlik %</label><input type="range" id="d-oee-a" min="50" max="100" value="85" oninput="dashGuncelle()"/><span class="vl" id="d-oee-a-v">%85</span></div>
+      <div class="row"><label>Performans %</label><input type="range" id="d-oee-p" min="50" max="100" value="90" oninput="dashGuncelle()"/><span class="vl" id="d-oee-p-v">%90</span></div>
+      <div class="row"><label>Kalite %</label><input type="range" id="d-oee-q" min="50" max="100" value="95" oninput="dashGuncelle()"/><span class="vl" id="d-oee-q-v">%95</span></div>
+    </div>
+    <div class="card">
+      <p class="sec">Mevcut Stok</p>
+      <div style="display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:500;color:#085041">Toz Dolum</span><input type="number" id="d-stok-toz" value="15000" oninput="dashGuncelle()"/></div>
+      <div style="display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:500;color:#0c447c">Granül Dolum</span><input type="number" id="d-stok-gran" value="4000" oninput="dashGuncelle()"/></div>
+      <div style="display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:center"><span style="font-size:12px;font-weight:500;color:#633806">Elle Dolum</span><input type="number" id="d-stok-elle" value="800" oninput="dashGuncelle()"/></div>
+    </div>
+  </div>
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// YARDIMCI FONKSİYONLAR
-// ═══════════════════════════════════════════════════
-function n(id){var el=document.getElementById(id);return el?parseFloat(el.value)||0:0;}
-function fmt(v){if(isNaN(v)||v===null)return'0';if(v<10&&v!==Math.round(v))return parseFloat(v.toFixed(3)).toLocaleString('tr-TR');return Math.round(v).toLocaleString('tr-TR');}
-function pct(v){return Math.round(v)+'%';}
-function setEl(id,html){var el=document.getElementById(id);if(el)el.innerHTML=html;}
-function getRenk(p){return p>=90?'#E24B4A':p>=80?'#EF9F27':'#1D9E75';}
+function n(id){var e=document.getElementById(id);return e?parseFloat(e.value)||0:0;}
+function set(id,html){var e=document.getElementById(id);if(e)e.innerHTML=html;}
+function fmt(v){if(v===undefined||v===null||isNaN(v))return'0';if(Math.abs(v)<10&&v!==Math.round(v))return parseFloat(v.toFixed(3)).toLocaleString('tr-TR');return Math.round(v).toLocaleString('tr-TR');}
+function badge(cls,txt){return'<span class="badge '+cls+'">'+txt+'</span>';}
 
-// ═══════════════════════════════════════════════════
-// NAVİGASYON
-// ═══════════════════════════════════════════════════
-var sayfaAdlari={dashboard:'Dashboard',kapasite:'Kapasite Analizi',mps:'MPS Planlayıcı',darbogaz:'Darboğaz & OEE',mrp:'MRP & Stok',ayarlar:'Ayarlar'};
-function navigate(id){
+function goTo(page,btn){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active');});
-  var page=document.getElementById('page-'+id);
-  if(page)page.classList.add('active');
-  var btns=document.querySelectorAll('.nav-item');
-  btns.forEach(function(b){if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+id+"'"))b.classList.add('active');});
-  setEl('topbar-title',sayfaAdlari[id]||id);
-  tumHesapla();
+  document.querySelectorAll('.nav-tab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+  if(page==='mps')mpsHesapla();
+  if(page==='darbogaz'){dbHesapla();oeeHesapla();}
+  if(page==='mrp')mrpHesapla();
+  if(page==='dashboard')dashGuncelle();
 }
 
-// ═══════════════════════════════════════════════════
-// SEKME
-// ═══════════════════════════════════════════════════
-function switchTab(prefix,id,btn){
-  var panels=document.querySelectorAll('[id^="'+prefix+'-tab-"]');
-  panels.forEach(function(p){p.classList.remove('active');});
-  var panel=document.getElementById(prefix+'-tab-'+id);
-  if(panel)panel.classList.add('active');
-  if(btn){
-    var siblings=btn.closest('.tab-bar').querySelectorAll('.tab-btn');
-    siblings.forEach(function(b){b.classList.remove('active');});
-    btn.classList.add('active');
-  }
-  tumHesapla();
+// ── MODÜL 1 ──
+function kapHesapla(){
+  var saat=n('k-saat'),gun=n('k-gun'),mak=n('k-mak'),planli=n('k-planli'),plansiz=n('k-plansiz');
+  document.getElementById('k-saat-v').textContent=saat.toFixed(1)+' sa';
+  document.getElementById('k-gun-v').textContent=gun+' gün';
+  document.getElementById('k-mak-v').textContent=mak+' adet';
+  document.getElementById('k-planli-v').textContent='%'+planli;
+  document.getElementById('k-plansiz-v').textContent='%'+plansiz;
+  var maxDak=Math.round(saat*60),kayip=(planli+plansiz)/100;
+  var netDak=Math.round(maxDak*(1-kayip)),optDak=Math.round(maxDak*0.85);
+  set('k-max',fmt(maxDak));set('k-opt',fmt(optDak));set('k-net',fmt(netDak));
+  set('k-hmaks',fmt(maxDak*mak*gun));set('k-hopt',fmt(optDak*mak*gun));set('k-hnet',fmt(netDak*mak*gun));
+  var hzToz=n('k-hz-toz'),hzGran=n('k-hz-gran'),hzElle=n('k-hz-elle');
+  var sToz=Math.round(10000/hzToz),sGran=Math.round(6000/hzGran),sElle=Math.round(500/hzElle);
+  var topSure=sToz+sGran+sElle,topKap=netDak*mak;
+  set('k-sure-toz',fmt(sToz)+' dak');set('k-sure-gran',fmt(sGran)+' dak');set('k-sure-elle',fmt(sElle)+' dak');
+  set('k-top-sure',fmt(topSure));set('k-top-kap',fmt(topKap));
+  function setD(id,s,k){set(id,s>k?badge('br','Aşım!'):s>k*0.85?badge('by','Sınırda'):badge('bg','OK'));}
+  setD('k-durum-toz',sToz,netDak);setD('k-durum-gran',sGran,netDak);setD('k-durum-elle',sElle,netDak);
+  set('k-uyari',topSure>topKap?'<div class="alert ar"><span style="font-weight:500">!</span><span>Toplam yük kapasiteyi aşıyor! Ek vardiya veya hedef revizyonu gerekli.</span></div>':'<div class="alert ag"><span>✓</span><span>Hedefler kapasite dahilinde. Kalan: '+fmt(topKap-topSure)+' dak.</span></div>');
+  var eff=1-kayip;
+  set('sc-a',fmt(Math.round(maxDak*eff*mak*gun))+' dak');
+  set('sc-b',fmt(Math.round(maxDak*eff*mak*(gun+1)))+' dak');
+  set('sc-c',fmt(Math.round(maxDak*eff*mak*gun*2))+' dak');
 }
 
-// ═══════════════════════════════════════════════════
-// PARAMETRELER (merkezi)
-// ═══════════════════════════════════════════════════
-function getP(){
-  return{
-    netDak:n('ay-net'), makSay:n('ay-mak'), gunHf:n('ay-gun'),
-    hzToz:n('ay-hz-toz'), hzGran:n('ay-hz-gran'), hzElle:n('ay-hz-elle'),
-    htToz:n('ay-ht-toz'), htGran:n('ay-ht-gran'), htElle:n('ay-ht-elle'),
-    gsToz:n('ay-gs-toz'), gsGran:n('ay-gs-gran'), gsElle:n('ay-gs-elle'),
-    stokToz:n('ay-stok-toz'), stokGran:n('ay-stok-gran'), stokElle:n('ay-stok-elle'),
-    oeeA:n('ay-oee-a'), oeeP:n('ay-oee-p'), oeeQ:n('ay-oee-q')
-  };
-}
-var uruns_def=[
-  {key:'toz',ad:'Toz Dolum',renk:'#1D9E75',rnk2:'#E1F5EE'},
-  {key:'gran',ad:'Granül Dolum',renk:'#185FA5',rnk2:'#E6F1FB'},
-  {key:'elle',ad:'Elle Dolum',renk:'#BA7517',rnk2:'#FAEEDA'}
-];
-function getUruns(p){
-  return uruns_def.map(function(u){
-    var hz=p['hz'+cap(u.key)], ht=p['ht'+cap(u.key)], gs=p['gs'+cap(u.key)], stok=p['stok'+cap(u.key)];
-    return Object.assign({},u,{hz:hz,ht:ht,gs:gs,stok:stok,sure:Math.round(ht/hz),gunluk:Math.round(ht/p.gunHf)});
+// ── MODÜL 2 ──
+function mpsHesapla(){
+  var netDak=n('k-net')||459,gunHf=n('k-gun')||5,makSay=n('k-mak')||3;
+  var topKap=netDak*makSay*gunHf;
+  var uruns=[
+    {key:'toz',ad:'Toz Dolum',renk:'#085041',hz:n('m-hz-toz'),talep:n('m-talep-toz'),onc:parseInt(document.getElementById('m-onc-toz').value)},
+    {key:'gran',ad:'Granül Dolum',renk:'#0c447c',hz:n('m-hz-gran'),talep:n('m-talep-gran'),onc:parseInt(document.getElementById('m-onc-gran').value)},
+    {key:'elle',ad:'Elle Dolum',renk:'#633806',hz:n('m-hz-elle'),talep:n('m-talep-elle'),onc:parseInt(document.getElementById('m-onc-elle').value)}
+  ];
+  uruns.forEach(function(u){u.sure=Math.round(u.talep/u.hz);u.gunSay=Math.min(Math.ceil(u.sure/netDak),gunHf);});
+  var siralanmis=[...uruns].sort(function(a,b){return a.onc-b.onc;});
+  var tbody='';
+  siralanmis.forEach(function(u,i){
+    var gU=Math.round(u.talep/u.gunSay);
+    var d=u.sure>netDak*gunHf?badge('br','Aşım'):u.sure>netDak*gunHf*0.85?badge('by','Sınırda'):badge('bg','OK');
+    tbody+='<tr style="background:'+(i%2?'var(--bg2)':'var(--bg)')+'"><td style="font-weight:500;color:'+u.renk+'">'+u.ad+'</td><td>'+fmt(u.talep)+'</td><td>'+fmt(u.sure)+'</td><td>'+u.gunSay+' gün</td><td>'+fmt(gU)+'</td><td>'+d+'</td></tr>';
   });
-}
-function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-
-// ═══════════════════════════════════════════════════
-// AYARLAR güncelle
-// ═══════════════════════════════════════════════════
-function ayarGuncelle(){
-  setEl('ay-net-v',n('ay-net')+' dak');
-  setEl('ay-mak-v',n('ay-mak')+' makine');
-  setEl('ay-gun-v',n('ay-gun')+' gün');
-  setEl('ay-oee-a-v','%'+n('ay-oee-a'));
-  setEl('ay-oee-p-v','%'+n('ay-oee-p'));
-  setEl('ay-oee-q-v','%'+n('ay-oee-q'));
-  tumHesapla();
-}
-
-// ═══════════════════════════════════════════════════
-// TÜM HESAPLA
-// ═══════════════════════════════════════════════════
-function tumHesapla(){
-  var p=getP();
-  var us=getUruns(p);
-  var topKap=p.netDak*p.makSay*p.gunHf;
-  var topSure=us.reduce(function(a,u){return a+u.sure;},0);
-  var topHt=us.reduce(function(a,u){return a+u.ht;},0);
-  var kapKul=Math.round(topSure/topKap*100);
-  var oee=Math.round(p.oeeA*p.oeeP*p.oeeQ/10000);
-
-  hesaplaDashboard(p,us,topKap,topSure,topHt,kapKul,oee);
-  hesaplaKapasite(p,us,topKap,topSure,kapKul);
-  hesaplaMPS(p,us,topKap);
-  hesaplaDarbogaz(p,oee);
-  hesaplaMRP(p,us);
-}
-
-// ═══════════════════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════════════════
-function hesaplaDashboard(p,us,topKap,topSure,topHt,kapKul,oee){
-  setEl('d-uretim',fmt(topHt));
-  setEl('d-uretim-t','↑ '+us.length+' ürün grubu');
-  setEl('d-kap',pct(kapKul));
-  var kt=kapKul>90?'t-dn':kapKul>80?'t-eq':'t-eq';
-  var ktxt=kapKul>90?'↑ Kapasite aşımı riski':kapKul>80?'→ Optimum bölgede':'→ Geliştirme alanı var';
-  var dKapT=document.getElementById('d-kap-t');if(dKapT){dKapT.className='kpi-trend '+kt;dKapT.textContent=ktxt;}
-  setEl('d-oee',pct(oee));
-  var oeeCls=oee>=85?'t-up':oee>=60?'t-eq':'t-dn';
-  var oeeTxt=oee>=85?'↑ Dünya standardında':oee>=60?'→ Gelişime açık':'↓ Kritik seviye';
-  var dOeeT=document.getElementById('d-oee-t');if(dOeeT){dOeeT.className='kpi-trend '+oeeCls;dOeeT.textContent=oeeTxt;}
-
-  var uyariSay=0;
-  var uyarilar=[];
-  us.forEach(function(u){if(u.stok<u.gs){uyariSay++;uyarilar.push({cls:'alert-r',msg:u.ad+' stoğu güvenlik seviyesinin altında ('+fmt(u.stok)+' < '+fmt(u.gs)+') — Sipariş ver!'});}});
-  if(kapKul>90){uyariSay++;uyarilar.push({cls:'alert-y',msg:'Kapasite kullanımı '+pct(kapKul)+' — %90 üzeri sürdürülemez. Ek vardiya değerlendir.'});}
-  if(oee<60){uyariSay++;uyarilar.push({cls:'alert-r',msg:'OEE kritik seviyede ('+pct(oee)+'). Acil iyileştirme gerekli.'});}
-  else if(oee<85){uyarilar.push({cls:'alert-y',msg:'OEE '+pct(oee)+' — Dünya standardının (%85) altında. Setup ve bakım süreçlerini gözden geçir.'});}
-  if(uyarilar.length===0)uyarilar.push({cls:'alert-g',msg:'Tüm göstergeler normal aralıkta. Sistem dengeli çalışıyor.'});
-  setEl('d-uyari',uyariSay||0);
-  var utxt=uyariSay>0?'↓ '+uyariSay+' aksiyon gerekli':'↑ Kritik uyarı yok';
-  setEl('d-uyari-t',utxt);
-  var badge=document.getElementById('topbar-badge');
-  if(badge){badge.className='badge '+(uyariSay>0?'b-r':'b-g');badge.textContent=uyariSay>0?uyariSay+' Uyarı':'Sistem Normal';}
-
-  var feedHTML=uyarilar.map(function(u){return'<div class="alert '+u.cls+'"><span style="flex-shrink:0">'+( u.cls==='alert-r'?'!':u.cls==='alert-y'?'⚠':'✓')+'</span><span>'+u.msg+'</span></div>';}).join('');
-  setEl('d-uyari-feed',feedHTML);
-
-  // Ürün yükü barları
-  var uyHTML='';
-  us.forEach(function(u){
-    var yuk=Math.min(Math.round(u.sure/(p.netDak*p.gunHf)*100),100);
-    uyHTML+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="font-weight:500;color:'+u.renk+'">'+u.ad+'</span><span style="color:#888780">'+fmt(u.ht)+' adet · '+fmt(u.sure)+' dak</span></div><div class="bar-wrap"><div class="bar-in" style="width:'+yuk+'%;background:'+u.renk+'"></div></div><div style="font-size:10px;color:#b4b2a9;margin-top:2px">Makine yükü: '+pct(yuk)+' · '+Math.min(Math.ceil(u.sure/p.netDak),p.gunHf)+' gün üretim</div></div>';
-  });
-  setEl('d-urun-yuk',uyHTML);
-
-  // Gauge
-  var r=54,cx=75,cy=72,sw=10;
-  var c=Math.min(kapKul,100);
-  var fgC=c>90?'#E24B4A':c>80?'#EF9F27':'#1D9E75';
-  var ang=(c/100)*Math.PI;
-  var x2=cx+r*Math.cos(Math.PI+ang),y2=cy+r*Math.sin(Math.PI+ang);
-  var lg=c>50?1:0;
-  var gSVG='<svg viewBox="0 0 150 95" width="150" height="95"><path d="M'+(cx-r)+','+cy+' A'+r+','+r+' 0 0,1 '+(cx+r)+','+cy+'" fill="none" stroke="#e0dfd8" stroke-width="'+sw+'" stroke-linecap="round"/><path d="M'+(cx-r)+','+cy+' A'+r+','+r+' 0 '+lg+',1 '+x2+','+y2+'" fill="none" stroke="'+fgC+'" stroke-width="'+sw+'" stroke-linecap="round"/><text x="'+cx+'" y="'+(cy-4)+'" text-anchor="middle" font-size="20" font-weight="500" fill="'+fgC+'" font-family="system-ui">'+pct(c)+'</text><text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" font-size="10" fill="#888780" font-family="system-ui">Kapasite Kullanımı</text></svg>';
-  setEl('d-kap-gauge',gSVG);
-
-  var koHTML='<div class="grid2" style="gap:8px">';
-  [[fmt(topKap)+' dak','Toplam Kapasite'],[fmt(topSure)+' dak','Gerekli Süre'],[fmt(topKap-topSure)+' dak','Kalan Kapasite'],[pct(kapKul),'Kullanım Oranı']].forEach(function(item){
-    koHTML+='<div style="background:#f5f4f0;border-radius:6px;padding:8px 10px"><p style="font-size:11px;color:#888780;margin-bottom:2px">'+item[1]+'</p><p style="font-size:15px;font-weight:500">'+item[0]+'</p></div>';
-  });
-  koHTML+='</div>';
-  setEl('d-kap-ozet',koHTML);
-
-  // OEE analiz
-  var oeeHTML='<div class="grid3" style="gap:10px">';
-  [[p.oeeA,'Kullanılabilirlik','Duruş & arıza'],[p.oeeP,'Performans','Hız kaybı'],[p.oeeQ,'Kalite','Fire kaybı']].forEach(function(item){
-    var v=item[0],renk=v>=90?'#1D9E75':v>=75?'#EF9F27':'#E24B4A';
-    oeeHTML+='<div style="background:#f5f4f0;border-radius:8px;padding:10px;text-align:center"><p style="font-size:11px;color:#888780;margin-bottom:4px">'+item[1]+'</p><p style="font-size:22px;font-weight:500;color:'+renk+';margin-bottom:4px">'+pct(v)+'</p><p style="font-size:10px;color:#b4b2a9;margin-bottom:6px">'+item[2]+'</p><div class="bar-wrap"><div class="bar-in" style="width:'+v+'%;background:'+renk+'"></div></div></div>';
-  });
-  oeeHTML+='</div>';
-  oeeHTML+='<div style="margin-top:10px;background:#f5f4f0;border-radius:8px;padding:8px 12px;font-size:12px;color:#888780">OEE = '+pct(p.oeeA)+' × '+pct(p.oeeP)+' × '+pct(p.oeeQ)+' = <strong style="color:#1a1a18">'+pct(oee)+'</strong> <span class="badge '+(oee>=85?'b-g':oee>=60?'b-y':'b-r')+'">'+( oee>=85?'Dünya standartı':oee>=60?'Gelişime açık':'Kritik')+'</span></div>';
-  setEl('d-oee-analiz',oeeHTML);
-}
-
-// ═══════════════════════════════════════════════════
-// KAPASİTE
-// ═══════════════════════════════════════════════════
-function hesaplaKapasite(p,us,topKap,topSure,kapKul){
-  var maxDak=Math.round(p.netDak*(100/(100-10)));
-  var slidersHTML='';
-  [['Günlük net üretim (dak)','ay-net',300,540,10,p.netDak,' dak'],['Makine sayısı','ay-mak',1,6,1,p.makSay,' mak'],['Çalışma günü','ay-gun',1,7,1,p.gunHf,' gün']].forEach(function(s){
-    slidersHTML+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><label style="width:200px;font-size:12px;color:#888780;flex-shrink:0">'+s[0]+'</label><input type="range" id="'+s[1]+'" min="'+s[2]+'" max="'+s[3]+'" step="'+s[4]+'" value="'+s[5]+'" style="flex:1" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500;min-width:60px;text-align:right">'+s[5]+s[6]+'</span></div>';
-  });
-  setEl('kap-sliders',slidersHTML);
-
-  var grid='<div class="grid3" style="gap:10px;margin-bottom:12px">';
-  [[fmt(p.netDak),'Net Üretim Süresi','dak/gün/makine'],[fmt(p.netDak*p.makSay),'Toplam Günlük','dak/gün (tüm mak)'],[fmt(topKap),'Haftalık Toplam','dak/hafta']].forEach(function(item){
-    grid+='<div class="kpi-card '+( item[1]==='Haftalık Toplam'?'green':'blue')+'"><p class="kpi-label">'+item[1]+'</p><p class="kpi-val" style="font-size:18px">'+item[0]+'</p><p class="kpi-sub">'+item[2]+'</p></div>';
-  });
-  grid+='</div>';
-  setEl('kap-sonuclar',grid);
-
-  var barHTML='';
-  [[pct(85),'Optimum Kapasite','#1D9E75',85],[pct(kapKul),'Mevcut Yük',getRenk(kapKul),Math.min(kapKul,100)],[pct(100-kapKul<0?0:100-kapKul),'Kalan Kapasite','#185FA5',Math.max(0,100-kapKul)]].forEach(function(b){
-    barHTML+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#888780"><span>'+b[1]+'</span><span style="font-weight:500;color:#1a1a18">'+b[0]+'</span></div><div class="bar-wrap"><div class="bar-in" style="width:'+b[3]+'%;background:'+b[2]+'"></div></div></div>';
-  });
-  setEl('kap-barlar',barHTML);
-
-  // Ürün yükü tablosu
-  var utHTML='<div style="overflow-x:auto"><table class="tbl" style="min-width:480px"><thead><tr><th>Ürün</th><th>Hız (adet/dak)</th><th>Günlük Hedef</th><th>Gerekli Süre</th><th>Durum</th></tr></thead><tbody>';
-  us.forEach(function(u){
-    var yuk=Math.min(Math.round(u.sure/(p.netDak*p.gunHf)*100),100);
-    var dur=yuk>=100?'<span class="badge b-r">Aşım!</span>':yuk>=85?'<span class="badge b-y">Sınırda</span>':'<span class="badge b-g">OK</span>';
-    utHTML+='<tr><td style="font-weight:500;color:'+u.renk+'">'+u.ad+'</td><td>'+u.hz+'</td><td>'+fmt(u.gunluk)+'</td><td>'+fmt(u.sure)+' dak</td><td>'+dur+'</td></tr>';
-  });
-  utHTML+='</tbody></table></div>';
-  var ozet='<div class="grid2" style="gap:10px;margin-top:12px"><div class="kpi-card '+(topSure>topKap?'red':'green')+'"><p class="kpi-label">Toplam Gereken</p><p class="kpi-val" style="font-size:18px">'+fmt(topSure)+'</p><p class="kpi-sub">dak/hafta</p></div><div class="kpi-card blue"><p class="kpi-label">Toplam Kapasite</p><p class="kpi-val" style="font-size:18px">'+fmt(topKap)+'</p><p class="kpi-sub">dak/hafta ('+p.makSay+' mak)</p></div></div>';
-  setEl('kap-urun-tablo',utHTML);
-  setEl('kap-urun-ozet',ozet);
-
-  // Senaryo
-  var eff=p.netDak;
-  var sc=[['Mevcut ('+p.gunHf+' gün)',eff*p.makSay*p.gunHf],['+'+ (p.gunHf<7?1:0)+' gün ('+Math.min(p.gunHf+1,7)+')',eff*p.makSay*Math.min(p.gunHf+1,7)],['2. Vardiya',eff*p.makSay*p.gunHf*2]];
-  var scHTML='<div class="grid3" style="gap:10px">';
-  sc.forEach(function(s,i){
-    scHTML+='<div style="background:#f5f4f0;border-radius:8px;padding:12px;border:0.5px solid '+(i===2?'#C0DD97':i===1?'#B5D4F4':'#e0dfd8')+'"><p style="font-size:11px;color:#888780;margin-bottom:6px">'+s[0]+'</p><p style="font-size:20px;font-weight:500">'+fmt(s[1])+'</p><p style="font-size:11px;color:#b4b2a9">dak/hafta</p></div>';
-  });
-  scHTML+='</div>';
-  setEl('kap-senaryo',scHTML);
-}
-
-// ═══════════════════════════════════════════════════
-// MPS
-// ═══════════════════════════════════════════════════
-function hesaplaMPS(p,us,topKap){
-  // Giriş
-  var girisHTML='<div style="overflow-x:auto"><table class="tbl" style="min-width:480px"><thead><tr><th>Ürün</th><th>Hız (adet/dak)</th><th>Haftalık Talep</th><th>Öncelik</th></tr></thead><tbody>';
-  us.forEach(function(u){
-    girisHTML+='<tr><td style="font-weight:500;color:'+u.renk+'">'+u.ad+'</td><td>'+u.hz+'</td><td>'+fmt(u.ht)+'</td><td><span class="badge b-b">Orta</span></td></tr>';
-  });
-  girisHTML+='</tbody></table></div>';
-  setEl('mps-giris-icerik',girisHTML);
-
-  var topSure=us.reduce(function(a,u){return a+u.sure;},0);
-  var topHt=us.reduce(function(a,u){return a+u.ht;},0);
-  var kulPct=Math.round(topSure/topKap*100);
-  var ozetHTML='<div class="grid3" style="gap:10px"><div class="kpi-card blue"><p class="kpi-label">Toplam Kapasite</p><p class="kpi-val" style="font-size:18px">'+fmt(topKap)+'</p><p class="kpi-sub">dak/hafta</p></div><div class="kpi-card '+(topSure>topKap?'red':'green')+'"><p class="kpi-label">Gerekli Süre</p><p class="kpi-val" style="font-size:18px">'+fmt(topSure)+'</p><p class="kpi-sub">dak/hafta</p></div><div class="kpi-card '+(kulPct>100?'red':kulPct>85?'amber':'green')+'"><p class="kpi-label">Kullanım</p><p class="kpi-val" style="font-size:18px">'+pct(kulPct)+'</p><p class="kpi-sub">'+(kulPct>100?'Kapasite aşımı!':kulPct>85?'Sınırda':'Dengeli')+'</p></div></div>';
-  setEl('mps-ozet',ozetHTML);
-
-  // Plan tablosu
-  var planHTML='<div style="overflow-x:auto"><table class="tbl" style="min-width:560px"><thead><tr><th>Ürün Grubu</th><th>Haftalık Talep</th><th>Gerekli Süre</th><th>Üretim Günü</th><th>Günlük Hedef</th><th>Durum</th></tr></thead><tbody>';
-  us.forEach(function(u){
-    var gunSay=Math.min(Math.ceil(u.sure/p.netDak),p.gunHf);
-    var gunUret=Math.round(u.ht/gunSay);
-    var dur=u.sure>p.netDak*p.gunHf?'<span class="badge b-r">Aşım</span>':u.sure>p.netDak*p.gunHf*0.85?'<span class="badge b-y">Sınırda</span>':'<span class="badge b-g">OK</span>';
-    planHTML+='<tr><td style="font-weight:500;color:'+u.renk+'">'+u.ad+'</td><td>'+fmt(u.ht)+'</td><td>'+fmt(u.sure)+' dak</td><td>'+gunSay+' gün</td><td>'+fmt(gunUret)+'</td><td>'+dur+'</td></tr>';
-  });
-  planHTML+='</tbody></table></div>';
-  if(topSure>topKap){planHTML+='<div class="alert alert-r" style="margin-top:10px"><span>!</span><span>Toplam yük kapasiteyi aşıyor. Üretim hedefleri revize edilmeli veya ek vardiya planlanmalı.</span></div>';}
-  else{planHTML+='<div class="alert alert-g" style="margin-top:10px"><span>✓</span><span>Mevcut hedefler kapasite dahilinde. Kalan kapasite ek siparişler için kullanılabilir.</span></div>';}
-  setEl('mps-plan-tablo',planHTML);
-
-  // Kurallar
-  var kuralHTML=['Önceliğe göre sırala — Yüksek öncelikli ürünü haftanın başına al.','Batch büyüklüğü — Setup maliyeti yüksekse büyük partiler daha verimli.','Tampon stok — Günlük talebin %20-30\'u kadar güvenlik stoğu tut.','Darboğaz önce — En uzun süren ürünü sabah başlat.'].map(function(k,i){return'<div style="background:#f5f4f0;border-left:3px solid #b4b2a9;padding:8px 12px;margin-bottom:6px;font-size:13px;border-radius:0 6px 6px 0"><strong>Kural '+(i+1)+':</strong> '+k+'</div>';}).join('');
-  setEl('mps-kurallar',kuralHTML);
-
-  // Gantt
-  var gunler=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].slice(0,p.gunHf);
-  var ganttHTML='<table class="tbl" style="min-width:400px"><thead><tr><th>Makine</th>'+gunler.map(function(g){return'<th>'+g+'</th>';}).join('')+'</tr></thead><tbody>';
-  for(var m=1;m<=p.makSay;m++){
-    ganttHTML+='<tr><td style="font-weight:500">Makine '+m+'</td>';
-    for(var g=0;g<p.gunHf;g++){
-      var u=us[(m-1+g)%us.length];
-      var adet=Math.round(u.hz*p.netDak);
-      var cls=u.key==='toz'?'gc-toz':u.key==='gran'?'gc-gran':'gc-elle';
-      ganttHTML+='<td><div class="gantt-cell '+cls+'">'+u.ad.split(' ')[0]+'<br><span style="font-size:9px;font-weight:400">'+fmt(adet)+'</span></div></td>';
-    }
+  var topT=uruns.reduce(function(a,b){return a+b.talep;},0),topS=uruns.reduce(function(a,b){return a+b.sure;},0);
+  tbody+='<tr style="border-top:1px solid var(--border2);font-weight:500"><td>Toplam</td><td>'+fmt(topT)+'</td><td>'+fmt(topS)+'</td><td colspan="2">Kapasite: '+fmt(topKap)+' dak</td><td>'+(topS>topKap?badge('br','Aşım'):badge('bg','Uygun'))+'</td></tr>';
+  set('mps-tbody',tbody);
+  var gcls=['gc-toz','gc-gran','gc-elle'],gads=['Toz','Granül','Elle'],ganttHTML='';
+  for(var m=1;m<=makSay;m++){
+    ganttHTML+='<tr><td style="font-weight:500;font-size:12px;padding:6px 8px">Makine '+m+'</td>';
+    for(var g=0;g<Math.min(gunHf,5);g++){var idx=(m-1+g)%3;var adet=Math.round(uruns[idx].hz*netDak);ganttHTML+='<td style="padding:4px"><div class="gantt-cell '+gcls[idx]+'">'+gads[idx]+'<br><span style="font-weight:400;font-size:10px">'+fmt(adet)+' ad</span></div></td>';}
     ganttHTML+='</tr>';
   }
-  ganttHTML+='</tbody></table>';
-  setEl('mps-gantt-icerik',ganttHTML);
-
-  var makOzetHTML='';
-  for(var mk=1;mk<=p.makSay;mk++){
-    var yukP=Math.min(Math.round(topSure/(p.makSay*p.netDak*p.gunHf)*100),100);
-    var renk=getRenk(yukP);
-    makOzetHTML+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:#888780">Makine '+mk+'</span><span style="font-weight:500;color:'+renk+'">'+pct(yukP)+'</span></div><div class="bar-wrap"><div class="bar-in" style="width:'+yukP+'%;background:'+renk+'"></div></div></div>';
-  }
-  setEl('mps-mak-ozet',makOzetHTML);
-
-  // Stok ROP
-  var stokHTML='<div style="font-size:11px;color:#b4b2a9;display:grid;grid-template-columns:120px 1fr 1fr 1fr 80px;gap:8px;margin-bottom:6px;font-weight:500"><span>Ürün</span><span>Mevcut Stok</span><span>Güv. Stok</span><span>Ted. Süresi (gün)</span><span>ROP</span></div>';
-  us.forEach(function(u){
-    var ropGd=u.gunluk, rop=Math.round(ropGd*3+u.gs);
-    var dur=u.stok<u.gs?'<span class="badge b-r">Sipariş!</span>':u.stok<rop?'<span class="badge b-y">Dikkat</span>':'<span class="badge b-g">OK</span>';
-    var pctBar=Math.min(Math.round(u.stok/rop*100),100);
-    stokHTML+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-weight:500;color:'+u.renk+'">'+u.ad+'</span><div style="display:flex;align-items:center;gap:8px">'+dur+'<span style="font-size:11px;color:#888780">'+fmt(u.stok)+' adet · ROP: '+fmt(rop)+'</span></div></div><div class="bar-wrap"><div class="bar-in" style="width:'+pctBar+'%;background:'+u.renk+'"></div></div></div>';
+  set('gantt-body',ganttHTML);
+  ['toz','gran','elle'].forEach(function(k,i){
+    var gd=uruns[i].talep/gunHf,guv=n('s-guv-'+k),ted=n('s-ted-'+k),stok=n('s-stok-'+k);
+    var rop=Math.round(gd*ted+guv);
+    set('s-rop-'+k,fmt(rop));
+    document.getElementById('s-rop-'+k).style.color=stok<rop?'var(--danger)':'var(--success)';
+    set('s-durum-'+k,stok<rop?badge('br','Sipariş Ver!'):stok<rop*1.5?badge('by','Dikkat'):badge('bg','Yeterli'));
   });
-  setEl('mps-stok-icerik',stokHTML);
 }
 
-// ═══════════════════════════════════════════════════
-// DARBOĞAZ & OEE
-// ═══════════════════════════════════════════════════
-var dbIstasyonVerileri=[
-  {ad:'Hammadde Hazırlık',kap:1800,talep:1200},
-  {ad:'Toz Dolum Mak.',kap:1500,talep:1400},
-  {ad:'Granül Dolum Mak.',kap:1080,talep:1080},
-  {ad:'Elle Dolum',kap:240,talep:200},
-  {ad:'Etiketleme/Kap.',kap:2000,talep:1200}
-];
-
-function dbIstasyonEkle(){
-  dbIstasyonVerileri.push({ad:'Yeni İstasyon',kap:1000,talep:800});
-  hesaplaDarbogaz(getP(),Math.round(n('ay-oee-a')*n('ay-oee-p')*n('ay-oee-q')/10000));
+// ── MODÜL 3 ──
+function getIst(){
+  return Array.from(document.querySelectorAll('.ist-row')).map(function(r){
+    var i=r.querySelectorAll('input');
+    return{ad:i[0].value,kap:parseFloat(i[1].value)||1,talep:parseFloat(i[2].value)||1,kulEl:r.querySelector('.ist-kul')};
+  });
 }
-
-function hesaplaDarbogaz(p,oee){
-  // İstasyon tablosu
-  var istHTML='<div style="font-size:11px;color:#b4b2a9;display:grid;grid-template-columns:150px 1fr 1fr 80px;gap:8px;margin-bottom:6px;font-weight:500"><span>İstasyon</span><span>Kapasite (adet/saat)</span><span>Talep (adet/saat)</span><span>Kullanım</span></div>';
-  var istasyonlar=dbIstasyonVerileri.map(function(ist,idx){
-    var kul=Math.round(ist.talep/ist.kap*100);
-    return Object.assign({},ist,{kul:kul,idx:idx});
+function dbHesapla(){
+  var ist=getIst();
+  var minKap=Math.min.apply(null,ist.map(function(i){return i.kap;}));
+  var dIdx=ist.findIndex(function(i){return i.kap===minKap;});
+  ist.forEach(function(i,idx){i.kulPct=Math.round((i.talep/i.kap)*100);i.darb=idx===dIdx;i.kulEl.textContent='%'+i.kulPct;i.kulEl.style.color=i.kulPct>=100?'var(--danger)':i.kulPct>=85?'var(--warning)':'var(--success)';});
+  var flowHTML='<div style="display:flex;align-items:flex-start;gap:0">';
+  ist.forEach(function(i2,idx){
+    var k=i2.kulPct,bg=k>=100?'var(--danger-bg)':k>=85?'var(--warning-bg)':'var(--success-bg)',clr=k>=100?'var(--danger)':k>=85?'var(--warning)':'var(--success)';
+    flowHTML+='<div style="display:flex;flex-direction:column;align-items:center;min-width:100px"><div class="flow-box'+(i2.darb?' darb':'')+'" style="background:'+bg+';border-color:'+clr+'"><div style="font-size:10px;font-weight:500;color:'+clr+'">'+i2.ad.substring(0,14)+'</div><div style="font-size:16px;font-weight:500;color:'+clr+';margin:3px 0">'+fmt(i2.kap)+'</div><div style="font-size:10px;color:var(--text3)">adet/saat</div><div style="margin-top:4px">'+badge(k>=100?'br':k>=85?'by':'bg','%'+k)+'</div>'+(i2.darb?'<div style="font-size:9px;font-weight:600;color:'+clr+';margin-top:3px">DARBOĞAZ</div>':'')+'</div></div>';
+    if(idx<ist.length-1)flowHTML+='<div style="display:flex;align-items:center;padding-top:28px;color:var(--text3);font-size:20px;margin:0 2px">›</div>';
   });
-  var minKap=Math.min.apply(null,istasyonlar.map(function(i){return i.kap;}));
-  istasyonlar.forEach(function(ist,idx){
-    ist.darb=ist.kap===minKap;
-    var renk=ist.kul>=100?'#E24B4A':ist.kul>=85?'#EF9F27':'#1D9E75';
-    istHTML+='<div style="display:grid;grid-template-columns:150px 1fr 1fr 80px;gap:8px;align-items:center;margin-bottom:8px">';
-    istHTML+='<input type="text" value="'+ist.ad+'" style="font-size:12px" data-db-idx="'+idx+'" data-db-field="ad" oninput="dbGuncelle(this)"/>';
-    istHTML+='<input type="number" value="'+ist.kap+'" min="1" style="font-size:12px" data-db-idx="'+idx+'" data-db-field="kap" oninput="dbGuncelle(this)"/>';
-    istHTML+='<input type="number" value="'+ist.talep+'" min="1" style="font-size:12px" data-db-idx="'+idx+'" data-db-field="talep" oninput="dbGuncelle(this)"/>';
-    istHTML+='<span style="font-size:13px;font-weight:500;color:'+renk+'">'+pct(ist.kul)+(ist.darb?' ⚑':'')+'</span></div>';
-  });
-  setEl('db-istasyonlar',istHTML);
-
-  // Akış görünümü
-  var akisHTML='<div style="display:flex;align-items:center;gap:4px;overflow-x:auto;padding:8px 0;flex-wrap:nowrap">';
-  istasyonlar.forEach(function(ist,idx){
-    var bg=ist.kul>=100?'#FCEBEB':ist.kul>=85?'#FAEEDA':'#EAF3DE';
-    var border=ist.kul>=100?'#E24B4A':ist.kul>=85?'#EF9F27':'#1D9E75';
-    var tc=ist.kul>=100?'#791F1F':ist.kul>=85?'#633806':'#27500A';
-    akisHTML+='<div style="min-width:90px;background:'+bg+';border:1.5px solid '+border+';border-radius:8px;padding:8px 6px;text-align:center'+(ist.darb?';animation:pulse 1.4s infinite':'')+'">';
-    akisHTML+='<div style="font-size:10px;font-weight:600;color:'+tc+';margin-bottom:3px">'+ist.ad.substring(0,14)+'</div>';
-    akisHTML+='<div style="font-size:15px;font-weight:500;color:'+tc+'">'+fmt(ist.kap)+'</div>';
-    akisHTML+='<div style="font-size:9px;color:'+tc+';opacity:.7">adet/saat</div>';
-    akisHTML+='<div style="margin-top:4px"><span class="badge" style="background:'+bg+';color:'+tc+';border:0.5px solid '+border+'">'+pct(ist.kul)+'</span></div>';
-    if(ist.darb)akisHTML+='<div style="font-size:9px;font-weight:600;color:'+tc+';margin-top:2px">DARBOĞAZ</div>';
-    akisHTML+='</div>';
-    if(idx<istasyonlar.length-1)akisHTML+='<div style="color:#b4b2a9;font-size:18px;flex-shrink:0">›</div>';
-  });
-  akisHTML+='</div>';
-  var darbIst=istasyonlar.find(function(i){return i.darb;});
-  if(darbIst&&darbIst.kul>=90){
-    akisHTML+='<div class="alert alert-y" style="margin-top:8px"><span>⚠</span><span>'+darbIst.ad+' darboğaz! Kapasite: '+fmt(darbIst.kap)+' adet/saat. Tüm hattın hızını bu istasyon belirliyor.</span></div>';
-  }
-  setEl('db-akis',akisHTML);
-
-  // Bar chart
-  var sortedIst=[].concat(istasyonlar).sort(function(a,b){return b.kul-a.kul;});
+  flowHTML+='</div>';
+  set('flow-wrap',flowHTML);
+  var di=ist[dIdx];
+  set('flow-uyari',di.kulPct>=90?'<div class="alert ay"><span>⚠</span><span>'+di.ad+' darboğaz — tüm hattın hızını bu istasyon belirliyor.</span></div>':'');
   var barHTML='';
-  sortedIst.forEach(function(ist){
-    var p2=Math.min(ist.kul,100);
-    var renk=getRenk(ist.kul);
-    barHTML+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:#888780">'+ist.ad+(ist.darb?' ⚑':' ')+'</span><span style="font-weight:500;color:'+renk+'">'+pct(ist.kul)+'</span></div><div class="bar-wrap"><div class="bar-in" style="width:'+p2+'%;background:'+renk+'"></div></div></div>';
-  });
-  setEl('db-barlar',barHTML);
-
-  // TOC
+  ist.forEach(function(i){var p=Math.min(i.kulPct,100),c=i.kulPct>=100?'var(--danger)':i.kulPct>=85?'var(--warning)':'var(--success)';barHTML+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">'+i.ad+'</span><span style="font-weight:500;color:'+c+'">%'+i.kulPct+'</span></div><div class="bar-wrap"><div class="bar-in" style="width:'+p+'%;background:'+c+'"></div></div></div>';});
+  set('db-bar-chart',barHTML);
   var tocHTML='<div style="display:flex;flex-direction:column;gap:8px">';
-  var dIst=darbIst||istasyonlar[0];
-  [['1','Kısıtı Bul','Darboğaz: <strong>'+dIst.ad+'</strong> — Kullanım %'+dIst.kul+'. Tüm hat bu istasyonun kapasitesiyle sınırlı.','b-r'],
-   ['2','Kısıtı Sonuna Kadar Kullan',dIst.ad+' hiç boş kalmasın. Setup sürelerini kıs, bakımı üretime zarar vermeyecek zamana al.','b-y'],
-   ['3','Her Şeyi Kısıta Tabi Kıl','Diğer istasyonlar '+fmt(dIst.kap)+' adet/saat ritminde çalışsın. Fazla üretim stok biriktirir.','b-b'],
-   ['4','Kısıtı Kaldır','Seçenekler: ek vardiya, ikinci makine, süreç iyileştirme. Önce maliyetsiz çözümleri dene.','b-b'],
-   ['5','Tekrarla','Darboğaz kalktıktan sonra yeni en zayıf halkayı bul. Sürekli iyileştirme döngüsü.','b-g']
-  ].forEach(function(a){
-    tocHTML+='<div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:#f5f4f0;border-radius:8px"><span class="badge '+a[3]+'" style="flex-shrink:0;min-width:20px;text-align:center">'+a[0]+'</span><div><p style="font-size:13px;font-weight:500;margin-bottom:3px">'+a[1]+'</p><p style="font-size:12px;color:#888780;margin:0">'+a[2]+'</p></div></div>';
-  });
+  [[badge('br','1'),'Kısıtı Bul','Darboğaz: <strong>'+di.ad+'</strong> — %'+di.kulPct+' kullanım.'],
+   [badge('by','2'),'Kısıtı Sonuna Kadar Kullan',di.ad+' hiç boş kalmasın. Setup sürelerini kıs.'],
+   [badge('bb','3'),'Her Şeyi Kısıta Tabi Kıl','Diğer istasyonlar '+fmt(di.kap)+' adet/saat ritminde çalışsın.'],
+   [badge('bb','4'),'Kısıtı Kaldır','Ek vardiya, ikinci makine veya süreç iyileştirme.'],
+   [badge('bg','5'),'Tekrarla','Darboğaz kalktıktan sonra yeni en zayıf halkayı bul.']
+  ].forEach(function(it){tocHTML+='<div style="display:flex;gap:10px;padding:10px;background:var(--bg2);border-radius:var(--radius);align-items:flex-start"><span style="flex-shrink:0">'+it[0]+'</span><div><p style="font-size:13px;font-weight:500;margin:0 0 2px">'+it[1]+'</p><p style="font-size:12px;color:var(--text2);margin:0">'+it[2]+'</p></div></div>';});
   tocHTML+='</div>';
-  setEl('db-toc-adimlar',tocHTML);
-
-  // Matris
-  var matrisHTML='<div style="overflow-x:auto"><table class="tbl" style="min-width:400px"><thead><tr><th>İstasyon</th><th>Kullanım</th><th>Hat Etkisi</th><th>Öncelik</th></tr></thead><tbody>';
-  sortedIst.forEach(function(ist,idx){
-    var etki=ist.darb?'Yüksek':ist.kul>80?'Orta':'Düşük';
-    var onc=idx===0?'<span class="badge b-r">1. Öncelik</span>':idx===1?'<span class="badge b-y">2. Öncelik</span>':'<span class="badge b-g">İzle</span>';
-    var p2=Math.min(ist.kul,100);
-    matrisHTML+='<tr><td style="font-weight:500">'+ist.ad+'</td><td><div style="display:flex;align-items:center;gap:6px"><div class="bar-wrap" style="width:80px"><div class="bar-in" style="width:'+p2+'%;background:'+getRenk(ist.kul)+'"></div></div><span style="font-size:12px">'+pct(ist.kul)+'</span></div></td><td>'+etki+'</td><td>'+onc+'</td></tr>';
-  });
-  matrisHTML+='</tbody></table></div>';
-  setEl('db-matris',matrisHTML);
-
-  // OEE sliderlar
-  var oeeA=p.oeeA,oeeP2=p.oeeP,oeeQ=p.oeeQ;
-  var oeeSlHTML='';
-  [[oeeA,'ay-oee-a','Kullanılabilirlik','Arıza ve duruş kaybı'],[oeeP2,'ay-oee-p','Performans','Hız kaybı'],[oeeQ,'ay-oee-q','Kalite','Fire kaybı']].forEach(function(s){
-    oeeSlHTML+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><label style="width:180px;font-size:12px;color:#888780;flex-shrink:0">'+s[2]+'</label><input type="range" id="'+s[1]+'" min="50" max="100" value="'+s[0]+'" style="flex:1" oninput="ayarGuncelle()"/><span style="font-size:12px;font-weight:500;min-width:36px;text-align:right">'+pct(s[0])+'</span></div><div style="font-size:11px;color:#b4b2a9;margin:-6px 0 8px 188px">'+s[3]+'</div>';
-  });
-  setEl('db-oee-sliders',oeeSlHTML);
-
-  var topDak=p.netDak*3;
-  var kayipDak=Math.round(topDak*(1-oee/100));
-  var oeeHtml='<div class="grid3" style="gap:10px"><div class="kpi-card '+(oee>=85?'green':oee>=60?'amber':'red')+'"><p class="kpi-label">OEE Skoru</p><p class="kpi-val">'+pct(oee)+'</p><p class="kpi-sub">'+(oee>=85?'Dünya standartı':oee>=60?'Gelişime açık':'Kritik')+'</p></div><div class="kpi-card amber"><p class="kpi-label">Kayıp Kapasite</p><p class="kpi-val" style="font-size:18px">'+fmt(kayipDak)+'</p><p class="kpi-sub">dak/gün</p></div><div class="kpi-card blue"><p class="kpi-label">Kurtarılabilir</p><p class="kpi-val" style="font-size:18px">'+fmt(kayipDak*20)+'</p><p class="kpi-sub">adet/gün potansiyel</p></div></div>';
-  var yorumlar=[];
-  if(oeeA<80)yorumlar.push('Kullanılabilirlik düşük — önleyici bakım planı kur.');
-  if(oeeP2<85)yorumlar.push('Performans düşük — makine teorik hızının altında çalışıyor.');
-  if(oeeQ<90)yorumlar.push('Kalite düşük — fire oranı yüksek, hammadde veya süreç kaynaklı olabilir.');
-  if(yorumlar.length===0)yorumlar.push('Tüm bileşenler iyi seviyede. OEE\'yi her ay %1 iyileştirmeyi hedefle.');
-  oeeHtml+=yorumlar.map(function(y){return'<p style="font-size:12px;color:#5f5e5a;margin-top:8px">→ '+y+'</p>';}).join('');
-  setEl('db-oee-sonuc',oeeHtml);
-
-  var topK=100-oee;
-  var kA=Math.round(topK*(100-oeeA)/((100-oeeA)+(100-oeeP2)+(100-oeeQ)+0.001));
-  var kP=Math.round(topK*(100-oeeP2)/((100-oeeA)+(100-oeeP2)+(100-oeeQ)+0.001));
-  var kQ=topK-kA-kP;
-  var agacHTML='<div class="grid3" style="gap:10px">';
-  [['Kullanılabilirlik Kaybı',kA,'Duruş, arıza, setup','#E24B4A'],['Performans Kaybı',kP,'Yavaş hız, küçük duruşlar','#EF9F27'],['Kalite Kaybı',kQ,'Fire, yeniden işleme','#185FA5']].forEach(function(item){
-    agacHTML+='<div style="background:#f5f4f0;border-radius:8px;padding:10px;text-align:center"><p style="font-size:11px;color:#888780;margin-bottom:4px">'+item[0]+'</p><p style="font-size:22px;font-weight:500;color:'+item[3]+';margin-bottom:2px">'+pct(item[1])+'</p><p style="font-size:10px;color:#b4b2a9">'+item[2]+'</p></div>';
-  });
-  agacHTML+='</div>';
-  setEl('db-oee-agac',agacHTML);
-
-  // Çözümler
-  var cozHTML='<div style="display:flex;flex-direction:column;gap:8px">';
-  [['Setup Süresi Azaltma (SMED)','Ücretsiz','Hızlı','%10-20 kapasite artışı. Setup prosedürlerini standartlaştır.','b-g'],
-   ['Önleyici Bakım Programı','Düşük','1-2 ay','Plansız duruşları %50 azaltabilir. Haftalık kontrol listesi oluştur.','b-g'],
-   ['Operatör Eğitimi','Düşük','Hızlı','Performans kaybının büyük kısmı operatör kaynaklı. SOP hazırla.','b-g'],
-   ['Ek Vardiya','Orta','Anında','Kapasite iki katına çıkar. Ancak darboğaz aynı istasyondaysa sorunu çözmez.','b-y'],
-   ['İkinci Makine (Darboğaz)','Yüksek','Uzun vadeli','Darboğazı kalıcı olarak kaldırır. Önce ücretsiz çözümleri tüket.','b-r']
-  ].forEach(function(c){
-    cozHTML+='<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:8px;padding:10px;background:#f5f4f0;border-radius:8px;align-items:start"><div><p style="font-size:13px;font-weight:500;margin-bottom:3px">'+c[0]+'</p><p style="font-size:12px;color:#888780;margin:0">'+c[3]+'</p></div><div style="text-align:center"><p style="font-size:10px;color:#b4b2a9;margin-bottom:2px">Maliyet</p><span class="badge '+c[4]+'">'+c[1]+'</span></div><div style="text-align:center"><p style="font-size:10px;color:#b4b2a9;margin-bottom:2px">Etki</p><span class="badge b-b">'+c[2]+'</span></div></div>';
-  });
-  cozHTML+='</div>';
-  setEl('db-cozumler',cozHTML);
+  set('toc-adimlar',tocHTML);
+  var senHTML='';
+  [['Setup Azaltma (SMED)','Ücretsiz','Hızlı','%10-20 kapasite artışı. Setup prosedürlerini standartlaştır.'],
+   ['Önleyici Bakım','Düşük','1-2 ay','Plansız duruşları %50 azaltabilir.'],
+   ['Operatör Eğitimi','Düşük','Hızlı','Standart iş prosedürü (SOP) hazırla.'],
+   ['Ek Vardiya','Orta','Anında','Kapasite iki katına çıkar.'],
+   ['İkinci Makine','Yüksek','Uzun vadeli','Darboğazı kalıcı olarak kaldırır.']
+  ].forEach(function(s){var mc=s[1]==='Ücretsiz'?'bg':s[1]==='Düşük'?'bb':s[1]==='Orta'?'by':'br';senHTML+='<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:8px;padding:10px;background:var(--bg2);border-radius:var(--radius);margin-bottom:8px;align-items:start"><div><p style="font-size:13px;font-weight:500;margin:0 0 3px">'+s[0]+'</p><p style="font-size:12px;color:var(--text2);margin:0">'+s[3]+'</p></div><div style="text-align:center"><p style="font-size:10px;color:var(--text3);margin:0 0 2px">Maliyet</p>'+badge(mc,s[1])+'</div><div style="text-align:center"><p style="font-size:10px;color:var(--text3);margin:0 0 2px">Etki</p>'+badge('bb',s[2])+'</div></div>';});
+  set('db-senaryolar',senHTML);
+}
+function oeeHesapla(){
+  var a=n('oee-a'),p=n('oee-p'),q=n('oee-q');
+  document.getElementById('oee-a-v').textContent='%'+a;document.getElementById('oee-p-v').textContent='%'+p;document.getElementById('oee-q-v').textContent='%'+q;
+  var oee=Math.round(a*p*q/10000);
+  set('oee-skor','%'+oee);set('oee-seviye',oee>=85?'Dünya standartı':oee>=60?'Gelişime açık':'Kritik!');
+  var topDak=459*3,kayip=Math.round(topDak*(1-oee/100));
+  set('oee-kayip',fmt(kayip));set('oee-kurtar',fmt(kayip*25));
+  var y=[];
+  if(a<80)y.push('Kullanılabilirlik düşük — önleyici bakım planı kur.');
+  if(p<85)y.push('Performans düşük — hız kaybı nedenlerini araştır.');
+  if(q<90)y.push('Kalite düşük — fire oranını düşür.');
+  if(!y.length)y.push('Tüm bileşenler iyi seviyede.');
+  set('oee-yorum',y.map(function(t){return'<p style="margin:3px 0">→ '+t+'</p>';}).join(''));
+}
+function istEkle(){
+  var wrap=document.getElementById('istasyon-rows');
+  var d=document.createElement('div');d.className='ist-row';
+  d.style='display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:8px';
+  d.innerHTML='<input type="text" value="Yeni İstasyon" oninput="dbHesapla()"/><input type="number" class="ist-kap" value="1000" min="1" oninput="dbHesapla()"/><input type="number" class="ist-talep" value="800" min="1" oninput="dbHesapla()"/><span class="ist-kul" style="font-size:13px;font-weight:500">—</span>';
+  wrap.appendChild(d);dbHesapla();
 }
 
-function dbGuncelle(el){
-  var idx=parseInt(el.getAttribute('data-db-idx'));
-  var field=el.getAttribute('data-db-field');
-  if(field==='kap'||field==='talep') dbIstasyonVerileri[idx][field]=parseFloat(el.value)||1;
-  else dbIstasyonVerileri[idx][field]=el.value;
-  var p=getP();
-  hesaplaDarbogaz(p,Math.round(p.oeeA*p.oeeP*p.oeeQ/10000));
-}
-// ═══════════════════════════════════════════════════
-// MRP
-// ═══════════════════════════════════════════════════
-var mrpStokData={};
-
-function hesaplaMRP(p,us){
-  var bomVerileri={
-    toz:[{ad:'Toz Hammadde',miktar:0.05,birim:'kg',ted:3},{ad:'Ambalaj (kutu)',miktar:1,birim:'adet',ted:5},{ad:'Etiket',miktar:1,birim:'adet',ted:2}],
-    gran:[{ad:'Granül Hammadde',miktar:0.08,birim:'kg',ted:4},{ad:'Ambalaj (torba)',miktar:1,birim:'adet',ted:5}],
-    elle:[{ad:'Karışım Hammadde',miktar:0.12,birim:'kg',ted:3},{ad:'Ambalaj (şişe)',miktar:1,birim:'adet',ted:4}]
-  };
-
-  var bomHTML='';
-  us.forEach(function(u){
-    var bom=bomVerileri[u.key]||[];
-    bomHTML+='<div style="margin-bottom:18px"><div style="font-size:13px;font-weight:500;color:'+u.renk+';margin-bottom:8px">'+u.ad+' — 1 adet üretmek için:</div><div style="border-left:2px solid #e0dfd8;margin-left:12px;padding-left:12px"><div style="font-size:11px;color:#b4b2a9;display:grid;grid-template-columns:150px 80px 70px 100px;gap:8px;margin-bottom:4px;font-weight:500"><span>Malzeme</span><span>Miktar</span><span>Birim</span><span>Ted. Süresi</span></div>';
-    bom.forEach(function(m){bomHTML+='<div style="display:grid;grid-template-columns:150px 80px 70px 100px;gap:8px;font-size:12px;margin-bottom:5px"><span>'+m.ad+'</span><span style="font-weight:500">'+m.miktar+'</span><span>'+m.birim+'</span><span>'+m.ted+' gün</span></div>';});
-    bomHTML+='</div></div>';
-  });
-  setEl('mrp-bom-icerik',bomHTML);
-
-  var malzemeler=[];
-  us.forEach(function(u){
-    var bom=bomVerileri[u.key]||[];
-    bom.forEach(function(m){
-      var brutIhtiyac=m.miktar*u.ht;
-      var key=m.ad+'_'+m.birim;
-      var found=malzemeler.find(function(x){return x.key===key;});
-      if(found){found.brutIhtiyac+=brutIhtiyac;found.ted=Math.max(found.ted,m.ted);}
-      else malzemeler.push({key:key,ad:m.ad,birim:m.birim,brutIhtiyac:brutIhtiyac,ted:m.ted});
+// ── MODÜL 4 ──
+var mrpStok={};
+function getBom(){
+  var mal=[],mps={toz:n('mrp-mps-toz'),gran:n('mrp-mps-gran'),elle:n('mrp-mps-elle')};
+  ['toz','gran','elle'].forEach(function(k){
+    document.querySelectorAll('#bom-'+k+'-rows .bom-row').forEach(function(r){
+      var i=r.querySelectorAll('input');
+      var ad=i[0].value,mik=parseFloat(i[1].value)||0,bir=i[2].value,ted=parseInt(i[3].value)||1;
+      var brut=mik*mps[k],key=ad+'_'+bir;
+      var f=mal.find(function(m){return m.key===key;});
+      if(f){f.brut+=brut;f.ted=Math.max(f.ted,ted);}else mal.push({key:key,ad:ad,bir:bir,brut:brut,ted:ted});
     });
   });
-
-  var hesapHTML='<div style="overflow-x:auto"><table class="tbl" style="min-width:600px"><thead><tr><th>Malzeme</th><th>Brüt İhtiyaç</th><th>Mevcut Stok</th><th>Net İhtiyaç</th><th>Sipariş Miktarı</th><th>Durum</th></tr></thead><tbody>';
-  var siparisler=[];
-  malzemeler.forEach(function(m){
-    var sd=mrpStokData[m.key]||{stok:0,guv:0};
-    var net=Math.max(0,m.brutIhtiyac-sd.stok+sd.guv);
+  return mal;
+}
+function mrpHesapla(){
+  var mal=getBom();
+  var sg='<div style="display:grid;grid-template-columns:160px 1fr 1fr 1fr;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text3);font-weight:600"><span>MALZEME</span><span>MEVCUT STOK</span><span>SİPARİŞTEKİ</span><span>GÜV. STOK</span></div>';
+  mal.forEach(function(m){
+    if(!mrpStok[m.key])mrpStok[m.key]={stok:0,sip:0,guv:0};
+    sg+='<div style="display:grid;grid-template-columns:160px 1fr 1fr 1fr;gap:8px;margin-bottom:6px;align-items:center"><span style="font-size:12px;font-weight:500">'+m.ad+' <span style="font-weight:400;color:var(--text3)">('+m.bir+')</span></span>';
+    ['stok','sip','guv'].forEach(function(t){sg+='<input type="number" min="0" step="0.01" value="'+mrpStok[m.key][t]+'" data-key="'+m.key+'" data-tip="'+t+'" oninput="mrpStokG(this)" style="font-size:12px"/>';});
+    sg+='</div>';
+  });
+  set('mrp-stok-giris',sg);
+  var tbody='',siparisler=[];
+  mal.forEach(function(m){
+    var sd=mrpStok[m.key]||{stok:0,sip:0,guv:0};
+    var net=Math.max(0,m.brut-sd.stok-sd.sip+(sd.guv||0));
     var sipMik=net>0?Math.ceil(net*1.1):0;
-    var dur=net>m.brutIhtiyac*0.8?'<span class="badge b-r">Acil</span>':net>0?'<span class="badge b-y">Sipariş Ver</span>':'<span class="badge b-g">Yeterli</span>';
-    if(net>0) siparisler.push({ad:m.ad,birim:m.birim,miktar:sipMik,ted:m.ted,net:net,pct:Math.round(net/m.brutIhtiyac*100)});
-    hesapHTML+='<tr><td style="font-weight:500">'+m.ad+'</td><td>'+fmt(m.brutIhtiyac)+' '+m.birim+'</td><td><input type="number" value="'+(sd.stok||0)+'" min="0" style="width:80px;font-size:12px" data-mrp-key="'+m.key+'" data-mrp-field="stok" oninput="mrpStokGuncelle(this)"/></td><td style="font-weight:500">'+fmt(net)+' '+m.birim+'</td><td style="color:#185FA5;font-weight:500">'+fmt(sipMik)+'</td><td>'+dur+'</td></tr>';
+    var d=net>m.brut*0.8?badge('br','Acil Sipariş'):net>0?badge('by','Sipariş Ver'):badge('bg','Stok Yeterli');
+    if(net>0)siparisler.push({ad:m.ad,bir:m.bir,miktar:sipMik,ted:m.ted,net:net,pct:Math.round(net/m.brut*100)});
+    tbody+='<tr><td style="font-weight:500">'+m.ad+'</td><td>'+fmt(m.brut)+' '+m.bir+'</td><td>'+fmt(sd.stok)+'</td><td>'+fmt(sd.sip)+'</td><td>'+fmt(sd.guv)+'</td><td style="font-weight:500">'+fmt(net)+' '+m.bir+'</td><td style="color:var(--info);font-weight:500">'+fmt(sipMik)+'</td><td>'+d+'</td></tr>';
   });
-  hesapHTML+='</tbody></table></div><p style="font-size:11px;color:#b4b2a9;margin-top:8px">Mevcut Stok sütununa gerçek değerleri girerek net ihtiyacı güncelleyebilirsin.</p>';
-  setEl('mrp-hesap-icerik',hesapHTML);
-
-  var zamanHTML='<div style="overflow-x:auto"><table class="tbl" style="min-width:480px"><thead><tr><th>Malzeme</th><th>Hf 1 (Bu hafta)</th><th>Hf 2</th><th>Hf 3</th><th>Hf 4 (Üretim)</th></tr></thead><tbody>';
-  malzemeler.forEach(function(m){
-    var sipHafta=Math.max(1,4-Math.ceil(m.ted/5));
-    zamanHTML+='<tr><td style="font-weight:500;font-size:12px">'+m.ad+'</td>';
-    for(var hf=1;hf<=4;hf++){
-      if(hf===4) zamanHTML+='<td><div class="gantt-cell gc-toz">Üretim</div></td>';
-      else if(hf===sipHafta) zamanHTML+='<td><div class="gantt-cell gc-elle">Sipariş Ver</div></td>';
-      else if(hf<sipHafta) zamanHTML+='<td><div class="gantt-cell gc-bos">—</div></td>';
-      else zamanHTML+='<td><div class="gantt-cell" style="background:#E6F1FB;color:#0C447C">Tedarik</div></td>';
-    }
-    zamanHTML+='</tr>';
+  set('mrp-tbody',tbody);
+  var zt='<table><thead><tr><th style="min-width:140px">Malzeme</th><th>Hf 1 (Bu hafta)</th><th>Hf 2</th><th>Hf 3</th><th>Hf 4</th></tr></thead><tbody>';
+  mal.forEach(function(m){
+    zt+='<tr><td style="font-weight:500;font-size:12px">'+m.ad+'</td>';
+    var sipHf=Math.ceil(m.ted/5),sipCell=4-sipHf+1;
+    for(var hf=1;hf<=4;hf++){if(hf===4)zt+='<td><div class="gantt-cell gc-toz">Üretim</div></td>';else if(hf===sipCell&&sipCell<4)zt+='<td><div class="gantt-cell gc-elle">Sipariş Ver</div></td>';else zt+='<td><div class="gantt-cell gc-bos">—</div></td>';}
+    zt+='</tr>';
   });
-  zamanHTML+='</tbody></table></div><div class="alert alert-b" style="margin-top:10px"><span>ℹ</span><span>Tedarik süresi geriye sayılarak hesaplanır. Hf 4\'te üretim yapılacaksa malzeme en geç Hf 2\'de sipariş edilmeli.</span></div>';
-  setEl('mrp-zaman-icerik',zamanHTML);
-
+  zt+='</tbody></table>';
+  set('mrp-zaman',zt);
   var sipHTML='';
-  if(siparisler.length===0){
-    sipHTML='<div class="alert alert-g"><span>✓</span><span>Tüm malzemeler için stok yeterli.</span></div>';
-  } else {
-    siparisler.sort(function(a,b){return b.pct-a.pct;});
-    siparisler.forEach(function(s){
-      var acil=s.pct>80;
-      sipHTML+='<div style="border:0.5px solid '+(acil?'#F7C1C1':'#FAC775')+';border-radius:8px;padding:10px 12px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:'+(acil?'#FCEBEB':'#FAEEDA')+'"><div><p style="font-size:13px;font-weight:500;margin-bottom:3px">'+s.ad+'</p><p style="font-size:12px;color:#5f5e5a;margin:0">Miktar: <strong>'+fmt(s.miktar)+' '+s.birim+'</strong> · Tedarik: '+s.ted+' gün</p></div><span class="badge '+(acil?'b-r':'b-y')+'">'+(acil?'Acil':'Bu hafta')+'</span></div>';
-    });
-  }
-  setEl('mrp-siparis-icerik',sipHTML);
+  if(!siparisler.length){sipHTML='<div class="alert ag"><span>✓</span><span>Tüm malzemeler için stok yeterli.</span></div>';}
+  else{siparisler.sort(function(a,b){return b.pct-a.pct;});siparisler.forEach(function(s){var cls=s.pct>80?'acil':s.pct>40?'dikkat':'normal';var bd=s.pct>80?badge('br','Acil'):s.pct>40?badge('by','Bu hafta'):badge('bg','Planlı');sipHTML+='<div class="sip-card '+cls+'"><div><p style="font-size:13px;font-weight:500;margin:0 0 3px">'+s.ad+'</p><p style="font-size:12px;color:var(--text2);margin:0">Miktar: <strong>'+fmt(s.miktar)+' '+s.bir+'</strong> · Tedarik: '+s.ted+' gün · Net ihtiyaç: '+fmt(s.net)+'</p></div><div>'+bd+'</div></div>';});}
+  set('mrp-siparis',sipHTML);
+}
+function mrpStokG(el){var k=el.getAttribute('data-key'),t=el.getAttribute('data-tip');if(!mrpStok[k])mrpStok[k]={stok:0,sip:0,guv:0};mrpStok[k][t]=parseFloat(el.value)||0;mrpHesapla();}
+function bomEkle(key){var wrap=document.getElementById('bom-'+key+'-rows');var d=document.createElement('div');d.className='bom-row';d.style='display:grid;grid-template-columns:150px 80px 70px 60px;gap:6px;margin-bottom:6px;align-items:center';d.innerHTML='<input type="text" value="Yeni Malzeme" oninput="mrpHesapla()"/><input type="number" class="bom-m" value="1" step="0.001" min="0" oninput="mrpHesapla()"/><input type="text" value="adet" oninput="mrpHesapla()"/><input type="number" class="bom-t" value="3" min="1" max="60" oninput="mrpHesapla()"/>';wrap.appendChild(d);mrpHesapla();}
+
+// ── MODÜL 5 ──
+function dashView(v){
+  ['yonetim','uretim','ayarlar'].forEach(function(id){document.getElementById('dv-'+id).style.display=id===v?'block':'none';var b=document.getElementById('vbtn-'+id);if(b){b.style.fontWeight=id===v?'500':'400';b.style.background=id===v?'var(--bg2)':'transparent';}});
+  dashGuncelle();
+}
+function dashGuncelle(){
+  var net=n('d-net'),mak=n('d-mak'),gun=n('d-gun');
+  var hzToz=n('d-hz-toz'),hzGran=n('d-hz-gran'),hzElle=n('d-hz-elle');
+  var htToz=n('d-ht-toz'),htGran=n('d-ht-gran'),htElle=n('d-ht-elle');
+  var gsToz=n('d-gs-toz'),gsGran=n('d-gs-gran'),gsElle=n('d-gs-elle');
+  var stokToz=n('d-stok-toz'),stokGran=n('d-stok-gran'),stokElle=n('d-stok-elle');
+  var oeeA=n('d-oee-a'),oeeP=n('d-oee-p'),oeeQ=n('d-oee-q');
+  ['d-net','d-mak','d-gun'].forEach(function(id){var e=document.getElementById(id+'-v');if(e)e.textContent=n(id);});
+  ['d-oee-a','d-oee-p','d-oee-q'].forEach(function(id){var e=document.getElementById(id+'-v');if(e)e.textContent='%'+n(id);});
+  var topKap=net*mak*gun,sToz=Math.round(htToz/hzToz),sGran=Math.round(htGran/hzGran),sElle=Math.round(htElle/hzElle);
+  var topSure=sToz+sGran+sElle,topHedef=htToz+htGran+htElle,kapKul=Math.round(topSure/topKap*100);
+  var oee=Math.round(oeeA*oeeP*oeeQ/10000);
+  set('dash-tarih',new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
+  set('d-uretim',fmt(topHedef));set('d-kap','%'+kapKul);set('d-oee','%'+oee);
+  set('d-kap-t','<span class="kpi-trend '+(kapKul>90?'t-dn':kapKul>80?'t-eq':'t-eq')+'">'+(kapKul>90?'↑ Kapasite aşımı!':kapKul>80?'→ Optimum bölgede':'→ Geliştirme alanı')+'</span>');
+  set('d-oee-t','<span class="kpi-trend '+(oee>=85?'t-up':oee>=60?'t-eq':'t-dn')+'">'+(oee>=85?'↑ Dünya standartı':oee>=60?'→ Gelişime açık':'↓ Kritik')+'</span>');
+  var uSay=(stokGran<gsGran?1:0)+(stokElle<gsElle?1:0)+(kapKul>90?1:0)+(oee<60?1:0);
+  set('d-uyari',uSay||0);set('d-uyari-t','<span class="kpi-trend '+(uSay?'t-dn':'t-up')+'">'+(uSay?uSay+' aksiyon bekliyor':'Tüm göstergeler normal')+'</span>');
+  var uruns=[
+    {ad:'Toz Dolum',renk:'#1d9e75',hedef:htToz,sure:sToz,stok:stokToz,gs:gsToz},
+    {ad:'Granül Dolum',renk:'#185fa5',hedef:htGran,sure:sGran,stok:stokGran,gs:gsGran},
+    {ad:'Elle Dolum',renk:'#ba7517',hedef:htElle,sure:sElle,stok:stokElle,gs:gsElle}
+  ];
+  var upHTML='';
+  uruns.forEach(function(u){var p=Math.min(Math.round(u.sure/(net*gun)*100),100);upHTML+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:500;color:'+u.renk+'">'+u.ad+'</span><span style="font-size:11px;color:var(--text3)">'+fmt(u.hedef)+' adet · %'+p+' yük</span></div><div class="bar-wrap"><div class="bar-in" style="width:'+p+'%;background:'+u.renk+'"></div></div></div>';});
+  set('d-urun-perf',upHTML);
+  var r=52,cx=72,cy=68,sw=10,kp=Math.min(kapKul,100),gc=kp>90?'#e24b4a':kp>80?'#ef9f27':'#1d9e75';
+  var ex=cx+r*Math.cos(Math.PI*(1+kp/100)),ey=cy+r*Math.sin(Math.PI*(1+kp/100)),lg=kp>50?1:0;
+  set('d-gauge','<svg viewBox="0 0 144 88" width="144" height="88"><path d="M'+(cx-r)+','+cy+' A'+r+','+r+' 0 0,1 '+(cx+r)+','+cy+'" fill="none" stroke="var(--bg2)" stroke-width="'+sw+'" stroke-linecap="round"/><path d="M'+(cx-r)+','+cy+' A'+r+','+r+' 0 '+lg+',1 '+ex.toFixed(1)+','+ey.toFixed(1)+'" fill="none" stroke="'+gc+'" stroke-width="'+sw+'" stroke-linecap="round"/><text x="'+cx+'" y="'+(cy-5)+'" text-anchor="middle" font-size="20" font-weight="500" fill="'+gc+'">%'+kp+'</text><text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" font-size="10" fill="var(--text3)">Kapasite</text></svg>');
+  var koHTML='<div class="g2">';
+  [[fmt(topKap)+' dak','Toplam Kapasite'],[fmt(topSure)+' dak','Gerekli Süre'],[fmt(Math.max(0,topKap-topSure))+' dak','Kalan'],[' %'+kapKul,'Kullanım']].forEach(function(it){koHTML+='<div class="metric"><p class="metric-label">'+it[1]+'</p><p class="metric-val">'+it[0]+'</p></div>';});
+  koHTML+='</div>';set('d-kap-ozet',koHTML);
+  var uyarilar=[];
+  if(stokGran<gsGran)uyarilar.push(['ar','Granül Dolum stoğu güvenlik seviyesinin altında — Sipariş ver!']);
+  if(stokElle<gsElle)uyarilar.push(['ar','Elle Dolum stoğu güvenlik seviyesinin altında — Sipariş ver!']);
+  if(kapKul>90)uyarilar.push(['ay','Kapasite kullanımı %'+kapKul+' — %90 üzeri sürdürülemez.']);
+  if(oee<60)uyarilar.push(['ar','OEE kritik seviyede (%'+oee+'). Acil iyileştirme gerekli.']);
+  else if(oee<85)uyarilar.push(['ay','OEE %'+oee+' — Dünya standardının altında.']);
+  if(!uyarilar.length)uyarilar.push(['ag','Tüm göstergeler normal aralıkta.']);
+  set('d-uyari-feed',uyarilar.map(function(u){return'<div class="alert '+u[0]+'"><span style="flex-shrink:0">'+(u[0]==='ar'?'!':u[0]==='ay'?'⚠':'✓')+'</span><span>'+u[1]+'</span></div>';}).join(''));
+  var oeeHTML='<div class="g3">';
+  [[oeeA,'Kullanılabilirlik','Duruş & arıza'],[oeeP,'Performans','Hız kaybı'],[oeeQ,'Kalite','Fire']].forEach(function(it){var c=it[0]>=90?'var(--success)':it[0]>=75?'var(--warning)':'var(--danger)';oeeHTML+='<div class="metric" style="text-align:center"><p class="metric-label">'+it[1]+'</p><p class="metric-val" style="color:'+c+'">%'+it[0]+'</p><p class="metric-sub">'+it[2]+'</p><div class="bar-wrap" style="margin-top:6px"><div class="bar-in" style="width:'+it[0]+'%;background:'+c+'"></div></div></div>';});
+  oeeHTML+='</div><div class="alert ab" style="margin-top:10px">OEE = %'+oeeA+' × %'+oeeP+' × %'+oeeQ+' = <strong>%'+oee+'</strong> '+(oee>=85?badge('bg','Dünya standartı'):oee>=60?badge('by','Gelişime açık'):badge('br','Kritik'))+'</div>';
+  set('d-oee-analiz',oeeHTML);
+  var gHed=Math.round(topHedef/gun),gSure=Math.round(topSure/gun),gKalan=net*mak-gSure;
+  set('d-bugun-hedef',fmt(gHed));set('d-bugun-sure',fmt(gSure));
+  set('d-bugun-sure-t','<span class="kpi-trend '+(gSure<=net*mak?'t-up':'t-dn')+'">'+(gSure<=net*mak?'✓ Kapasiteye sığıyor':'⚠ Aşım')+'</span>');
+  set('d-kalan',fmt(Math.max(0,gKalan)));set('d-kalan-t','<span class="kpi-trend '+(gKalan>0?'t-up':'t-dn')+'">'+(gKalan>0?'↑ Ek sipariş alınabilir':'↓ Fazla mesai')+'</span>');
+  set('d-darb','Granül Dolum');
+  var planlar=[['Toz','gc-toz'],['Granül','gc-gran'],['Elle','gc-elle']],shiftHTML='<div style="display:grid;grid-template-columns:80px repeat(5,1fr);gap:3px;font-size:11px;margin-bottom:4px"><span style="color:var(--text3)">Makine</span>';
+  ['Pzt','Sal','Çar','Per','Cum'].forEach(function(g){shiftHTML+='<span style="text-align:center;font-weight:500;color:var(--text2)">'+g+'</span>';});shiftHTML+='</div>';
+  for(var mi=1;mi<=mak;mi++){shiftHTML+='<div style="display:grid;grid-template-columns:80px repeat(5,1fr);gap:3px;margin-bottom:3px"><div class="gantt-cell gc-bos" style="font-size:11px">Mak. '+mi+'</div>';for(var g=0;g<5;g++){var pp=planlar[(mi-1+g)%3];shiftHTML+='<div class="gantt-cell '+pp[1]+'" style="font-size:10px">'+pp[0]+'</div>';}shiftHTML+='</div>';}
+  set('d-shift',shiftHTML);
+  var makHTML='';
+  for(var mi2=1;mi2<=mak;mi2++){var yp=Math.min(Math.round(topSure/(mak*net*gun)*100),100);var mc=yp>90?'var(--danger)':yp>80?'var(--warning)':'var(--success)';makHTML+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">Makine '+mi2+'</span><span style="font-weight:500;color:'+mc+'">%'+yp+'</span></div><div class="bar-wrap"><div class="bar-in" style="width:'+yp+'%;background:'+mc+'"></div></div></div>';}
+  set('d-mak-yuk',makHTML);
+  var suHTML='';
+  uruns.forEach(function(u){var rop=Math.round(u.hedef/gun*2+u.gs),p=Math.min(Math.round(u.stok/rop*100),100);var d=u.stok<u.gs?badge('br','Acil Sipariş'):u.stok<rop?badge('by','Yakın'):badge('bg','Yeterli');suHTML+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px;font-weight:500;color:'+u.renk+'">'+u.ad+'</span><div style="display:flex;align-items:center;gap:6px">'+d+'<span style="font-size:11px;color:var(--text2)">'+fmt(u.stok)+' / ROP: '+fmt(rop)+'</span></div></div><div class="bar-wrap"><div class="bar-in" style="width:'+p+'%;background:'+u.renk+'"></div></div></div>';});
+  set('d-stok-uyari',suHTML);
 }
 
-function mrpStokGuncelle(el){
-  var key=el.getAttribute('data-mrp-key');
-  var field=el.getAttribute('data-mrp-field');
-  if(!mrpStokData[key]) mrpStokData[key]={stok:0,guv:0};
-  mrpStokData[key][field]=parseFloat(el.value)||0;
-  tumHesapla();
-}
-
-// ═══════════════════════════════════════════════════
-// BAŞLANGIÇ
-// ═══════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded',function(){
-  var tarihEl=document.getElementById('topbar-date');
-  if(tarihEl){
-    var d=new Date();
-    tarihEl.textContent=d.toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  }
-  tumHesapla();
-});
+// Başlat
+kapHesapla();
 </script>
 </body>
 </html>
