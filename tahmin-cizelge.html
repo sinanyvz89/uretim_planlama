@@ -45,7 +45,7 @@ nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 20px;
 .wrap{padding:20px;max-width:1100px;margin:0 auto}
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:14px}
 .sec{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px}
-.page{display:none}.page.active{display:block}
+.page{display:none!important}.page.active{display:block!important}
 
 /* GRID */
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -407,16 +407,19 @@ function set(id,html){var e=document.getElementById(id);if(e)e.innerHTML=html;}
 function fmt(v){return Math.round(v).toLocaleString('tr-TR');}
 function badge(cls,txt){return'<span class="badge '+cls+'">'+txt+'</span>';}
 function goTo(page,btn){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.page').forEach(function(p){
+    p.classList.remove('active');
+    p.style.display='';
+  });
   document.querySelectorAll('.nav-tab').forEach(function(b){b.classList.remove('active');});
   var pg=document.getElementById('page-'+page);
-  if(pg){pg.classList.add('active');pg.style.display='block';}
-  if(btn)btn.classList.add('active');
-  if(page==='tahmin')tahminTabloGoster();
-  if(page==='cizelge')cizelgeOlustur();
-  if(page==='kapasite')kapasiteGoster();
-  if(page==='ozet')ozetGoster();
-  if(page==='guncelle')urunSecDropdown();
+  if(pg) pg.classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(page==='tahmin') tahminTabloGoster();
+  if(page==='cizelge') cizelgeOlustur();
+  if(page==='kapasite') kapasiteGoster();
+  if(page==='ozet') ozetGoster();
+  if(page==='guncelle') urunSecDropdown();
 }
 
 // ── ÖRNEK VERİ ──
@@ -897,7 +900,7 @@ ornekVeriYukle();
 </script>
 
 <!-- ═══ SAYFA 6: AY SONU GÜNCELLE ═══ -->
-<div id="page-guncelle" class="page" style="display:none">
+<div id="page-guncelle" class="page">
 
   <div class="card">
     <p class="sec">Ay Sonu Güncelleme — Gerçekleşen vs Tahmin</p>
