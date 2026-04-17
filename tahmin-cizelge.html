@@ -147,6 +147,7 @@ tr:last-child td{border-bottom:none}
   <button class="nav-tab" onclick="goTo('cizelge',this)">3 · Günlük Çizelge</button>
   <button class="nav-tab" onclick="goTo('kapasite',this)">4 · Kapasite</button>
   <button class="nav-tab" onclick="goTo('ozet',this)">5 · Özet & Export</button>
+  <button class="nav-tab" onclick="goTo('guncelle',this)">6 · Ay Sonu Güncelle</button>
 </nav>
 
 <div class="wrap">
@@ -408,12 +409,14 @@ function badge(cls,txt){return'<span class="badge '+cls+'">'+txt+'</span>';}
 function goTo(page,btn){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-tab').forEach(function(b){b.classList.remove('active');});
-  document.getElementById('page-'+page).classList.add('active');
+  var pg=document.getElementById('page-'+page);
+  if(pg){pg.classList.add('active');pg.style.display='block';}
   if(btn)btn.classList.add('active');
   if(page==='tahmin')tahminTabloGoster();
   if(page==='cizelge')cizelgeOlustur();
   if(page==='kapasite')kapasiteGoster();
   if(page==='ozet')ozetGoster();
+  if(page==='guncelle')urunSecDropdown();
 }
 
 // ── ÖRNEK VERİ ──
@@ -891,6 +894,354 @@ document.getElementById('ornekIndir').addEventListener('click',function(e){
 
 // Başlat
 ornekVeriYukle();
+</script>
+
+<!-- ═══ SAYFA 6: AY SONU GÜNCELLE ═══ -->
+<div id="page-guncelle" class="page" style="display:none">
+
+  <div class="card">
+    <p class="sec">Ay Sonu Güncelleme — Gerçekleşen vs Tahmin</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      ERP'den geçen ayın gerçekleşen satış verisini yükle. Sistem tahmin hatalarını analiz eder ve modeli otomatik iyileştirir.
+    </p>
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:10px 14px;font-family:monospace;font-size:12px;color:var(--text);overflow-x:auto;margin-bottom:12px;border-left:3px solid var(--amber)">
+      urun_kodu;gerceklesen_adet;ay<br>
+      TOZ001;41500;2025-03<br>
+      GRA001;28200;2025-03<br>
+      ELL001;1950;2025-03
+    </div>
+    <div class="g2">
+      <div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:6px">Gerçekleşen veriyi yapıştır:</p>
+        <textarea id="guncelle-paste" rows="8" placeholder="urun_kodu;gerceklesen_adet;ay&#10;TOZ001;41500;2025-03&#10;..." style="font-family:monospace;font-size:12px"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="primary" onclick="guncelleVeriYukle()" style="background:var(--amber);border-color:var(--amber)">Veriyi Yükle & Analiz Et</button>
+          <button onclick="ornekGuncelleYukle()">Örnek Veri</button>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:6px">Manuel giriş (tek ürün):</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+          <div>
+            <label style="font-size:11px;color:var(--text3)">Ürün Kodu</label>
+            <select id="g-urun-sec" style="margin-top:3px"><option value="">Seç...</option></select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text3)">Gerçekleşen Adet</label>
+            <input type="number" id="g-gerceklesen" placeholder="41500" style="margin-top:3px"/>
+          </div>
+        </div>
+        <button onclick="tekUrunGuncelle()">Ekle</button>
+        <div id="g-manuel-liste" style="margin-top:10px;font-size:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="guncelle-analiz-wrap" style="display:none">
+    <div class="card">
+      <p class="sec">Model Performans Karşılaştırması</p>
+      <div class="g4" id="g-kpi-wrap"></div>
+    </div>
+
+    <div class="card">
+      <p class="sec">Ürün Bazlı Sapma Analizi</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <select id="g-filtre-grup" style="width:140px" onchange="sapmaTabloGoster()">
+          <option value="">Tüm Gruplar</option>
+          <option value="toz">Toz Dolum</option>
+          <option value="gran">Granül Dolum</option>
+          <option value="elle">Elle Dolum</option>
+        </select>
+        <select id="g-filtre-siralama" style="width:160px" onchange="sapmaTabloGoster()">
+          <option value="sapma_desc">Sapma ↓ En büyük</option>
+          <option value="sapma_asc">Sapma ↑ En küçük</option>
+          <option value="gercek_desc">Gerçekleşen ↓</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Ürün Kodu</th><th>Ürün Adı</th><th>Grup</th>
+            <th>Tahmin</th><th>Gerçekleşen</th>
+            <th>Fark (adet)</th><th>Hata %</th>
+            <th>Durum</th><th>Öneri</th>
+          </tr></thead>
+          <tbody id="g-sapma-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="sec">Sapma Dağılımı</p>
+      <div style="overflow-x:auto">
+        <svg id="g-sapma-svg" width="100%" viewBox="0 0 620 180" style="min-width:500px"></svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="sec">Model Öğrenme — Parametre Önerileri</p>
+      <div id="g-parametre-oneri"></div>
+      <hr/>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="primary" onclick="modelGuncelle()" style="background:var(--green);border-color:var(--green)">Modeli Güncelle & Yeniden Tahminle</button>
+        <button onclick="gecmisEkle()">Geçmiş Veriye Ekle</button>
+        <button onclick="exportSapmaCSV()">Sapma Raporu CSV</button>
+      </div>
+      <div id="g-guncelleme-mesaj" style="margin-top:8px;font-size:12px"></div>
+    </div>
+
+    <div class="card">
+      <p class="sec">Kümülatif Model Doğruluğu (Güncelleme Geçmişi)</p>
+      <div id="g-gecmis-wrap">
+        <p style="font-size:12px;color:var(--text3)">Henüz güncelleme geçmişi yok. İlk ay sonu güncellemesini yaptıktan sonra burası dolacak.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── AY SONU GÜNCELLEME ──
+var gerceklesenVeri = {};   // urun_kodu → gerceklesen adet
+var manuelGirdi = {};       // urun_kodu → gerceklesen adet
+var guncellemeGecmisi = []; // [{tarih, ortMape, urunSay}]
+
+function ornekGuncelleYukle(){
+  var ornekler = '';
+  urunler.slice(0,8).forEach(function(u){
+    var t = tahminler[u.kod];
+    if(!t) return;
+    var tahmin = Math.round(t.gelecek[0]||0);
+    var sapmaFaktor = 0.88 + Math.random()*0.24;
+    var gercek = Math.round(tahmin * sapmaFaktor);
+    var ay = new Date();ay.setMonth(ay.getMonth()-1);
+    var ayStr = ay.getFullYear()+'-'+String(ay.getMonth()+1).padStart(2,'0');
+    ornekler += u.kod+';'+gercek+';'+ayStr+'\n';
+  });
+  document.getElementById('guncelle-paste').value = 'urun_kodu;gerceklesen_adet;ay\n'+ornekler.trim();
+  guncelleVeriYukle();
+}
+
+function guncelleVeriYukle(){
+  var text = document.getElementById('guncelle-paste').value.trim();
+  if(!text) return;
+  gerceklesenVeri = {};
+  var satirlar = text.split('\n');
+  for(var i=1;i<satirlar.length;i++){
+    var cols = satirlar[i].split(/[;,\t]/);
+    if(cols.length>=2){
+      var kod = cols[0].trim();
+      var adet = parseInt(cols[1])||0;
+      if(kod && adet>0) gerceklesenVeri[kod] = adet;
+    }
+  }
+  Object.assign(gerceklesenVeri, manuelGirdi);
+  if(Object.keys(gerceklesenVeri).length===0){alert('Veri okunamadı. Formatı kontrol et.');return;}
+  document.getElementById('guncelle-analiz-wrap').style.display='block';
+  guncellemeKPIGoster();
+  sapmaTabloGoster();
+  sapmaSVGCiz();
+  parametreOneriGoster();
+}
+
+function urunSecDropdown(){
+  var sel = document.getElementById('g-urun-sec');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Seç...</option>';
+  urunler.forEach(function(u){
+    sel.innerHTML += '<option value="'+u.kod+'">'+u.kod+' — '+u.ad+'</option>';
+  });
+}
+
+function tekUrunGuncelle(){
+  var kod = document.getElementById('g-urun-sec').value;
+  var adet = parseInt(document.getElementById('g-gerceklesen').value)||0;
+  if(!kod||!adet){alert('Ürün ve miktar girin.');return;}
+  manuelGirdi[kod] = adet;
+  var html = Object.entries(manuelGirdi).map(function(e){
+    return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">'+e[0]+'</span><span>'+fmt(e[1])+' adet</span></div>';
+  }).join('');
+  set('g-manuel-liste', html);
+  document.getElementById('g-gerceklesen').value = '';
+}
+
+function guncellemeKPIGoster(){
+  var kodlar = Object.keys(gerceklesenVeri);
+  var topGercek=0, topTahmin=0, hataSum=0, hataN=0;
+  var dusukSay=0, yukselSay=0;
+  kodlar.forEach(function(k){
+    var t = tahminler[k];
+    if(!t) return;
+    var tah = Math.round(t.gelecek[0]||0);
+    var ger = gerceklesenVeri[k];
+    topGercek += ger; topTahmin += tah;
+    var hata = tah>0?Math.abs((ger-tah)/tah)*100:0;
+    hataSum += hata; hataN++;
+    if(ger>tah*1.05) yukselSay++;
+    else if(ger<tah*0.95) dusukSay++;
+  });
+  var ortHata = hataN?hataSum/hataN:0;
+  var sapmaOran = topTahmin>0?((topGercek-topTahmin)/topTahmin*100):0;
+  set('g-kpi-wrap',
+    '<div class="kpi g"><p class="kpi-label">Güncellenen Ürün</p><p class="kpi-val">'+kodlar.length+'</p><p class="kpi-sub">adet</p></div>'+
+    '<div class="kpi b"><p class="kpi-label">Ort. Tahmin Hatası</p><p class="kpi-val">%'+ortHata.toFixed(1)+'</p><p class="kpi-sub">'+(ortHata<5?'Mükemmel':ortHata<10?'İyi':ortHata<15?'Kabul edilebilir':'İyileştirme gerekli')+'</p></div>'+
+    '<div class="kpi '+(sapmaOran>0?'g':'y')+'"><p class="kpi-label">Toplam Sapma</p><p class="kpi-val">'+(sapmaOran>0?'+':'')+sapmaOran.toFixed(1)+'%</p><p class="kpi-sub">'+(sapmaOran>0?'Tahmin altında kaldı':'Tahmin üstünde kaldı')+'</p></div>'+
+    '<div class="kpi p"><p class="kpi-label">Beklenenden Yüksek</p><p class="kpi-val">'+yukselSay+'</p><p class="kpi-sub">'+dusukSay+' ürün düşük kaldı</p></div>');
+}
+
+function getSapmaVerisi(){
+  return Object.keys(gerceklesenVeri).map(function(k){
+    var u = urunler.find(function(x){return x.kod===k;});
+    var t = tahminler[k];
+    if(!u||!t) return null;
+    var tah = Math.round(t.gelecek[0]||0);
+    var ger = gerceklesenVeri[k];
+    var fark = ger-tah;
+    var hataPct = tah>0?((ger-tah)/tah*100):0;
+    return{kod:k,ad:u.ad,grup:u.grup,tah:tah,ger:ger,fark:fark,hataPct:hataPct};
+  }).filter(Boolean);
+}
+
+function sapmaTabloGoster(){
+  var veri = getSapmaVerisi();
+  var grup = document.getElementById('g-filtre-grup')?document.getElementById('g-filtre-grup').value:'';
+  var siralama = document.getElementById('g-filtre-siralama')?document.getElementById('g-filtre-siralama').value:'sapma_desc';
+  if(grup) veri = veri.filter(function(v){return v.grup===grup;});
+  veri.sort(function(a,b){
+    if(siralama==='sapma_desc') return Math.abs(b.hataPct)-Math.abs(a.hataPct);
+    if(siralama==='sapma_asc') return Math.abs(a.hataPct)-Math.abs(b.hataPct);
+    return b.ger-a.ger;
+  });
+  var tbody = '';
+  veri.forEach(function(v){
+    var gcls = v.grup==='toz'?'bg':v.grup==='gran'?'bb':'by';
+    var farkClr = v.fark>0?'var(--green)':'var(--red)';
+    var absPct = Math.abs(v.hataPct);
+    var durumCls = absPct<5?'bg':absPct<10?'by':absPct<20?'br':'br';
+    var durumTxt = absPct<5?'Mükemmel':absPct<10?'İyi':absPct<20?'Sapma var':'Yüksek sapma';
+    var oneri = '';
+    if(v.fark>0&&absPct>10) oneri='<span style="font-size:10px;color:var(--green)">↑ Talebi yükselt</span>';
+    else if(v.fark<0&&absPct>10) oneri='<span style="font-size:10px;color:var(--amber)">↓ Talebi düşür</span>';
+    else oneri='<span style="font-size:10px;color:var(--text3)">Model stabil</span>';
+    tbody+='<tr>';
+    tbody+='<td style="font-weight:500">'+v.kod+'</td>';
+    tbody+='<td>'+v.ad+'</td>';
+    tbody+='<td>'+badge(gcls,GRUP_AD[v.grup]||v.grup)+'</td>';
+    tbody+='<td>'+fmt(v.tah)+'</td>';
+    tbody+='<td style="font-weight:500">'+fmt(v.ger)+'</td>';
+    tbody+='<td style="font-weight:500;color:'+farkClr+'">'+(v.fark>0?'+':'')+fmt(v.fark)+'</td>';
+    tbody+='<td>'+(v.hataPct>0?'+':'')+v.hataPct.toFixed(1)+'%</td>';
+    tbody+='<td>'+badge(durumCls,durumTxt)+'</td>';
+    tbody+='<td>'+oneri+'</td>';
+    tbody+='</tr>';
+  });
+  set('g-sapma-tbody',tbody||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:12px">Gösterilecek veri yok</td></tr>');
+}
+
+function sapmaSVGCiz(){
+  var veri = getSapmaVerisi();
+  if(!veri.length) return;
+  var svg = document.getElementById('g-sapma-svg');
+  if(!svg) return;
+  var W=620,H=180,pad={l:40,r:20,t:20,b:40};
+  var maxAbs=Math.max.apply(null,veri.map(function(v){return Math.abs(v.hataPct);}));
+  maxAbs=Math.max(maxAbs,10);
+  var html='';
+  var bw=Math.min((W-pad.l-pad.r)/veri.length*0.7,30);
+  var cy=pad.t+(H-pad.t-pad.b)/2;
+  // Merkez çizgi
+  html+='<line x1="'+pad.l+'" y1="'+cy+'" x2="'+(W-pad.r)+'" y2="'+cy+'" stroke="var(--border2)" stroke-width="1"/>';
+  html+='<text x="'+(pad.l-4)+'" y="'+cy+'" text-anchor="end" font-size="9" fill="var(--text3)" dominant-baseline="central">0%</text>';
+  // +/- çizgiler
+  [10,20].forEach(function(pct){
+    var yp=cy-(H-pad.t-pad.b)/2*(pct/maxAbs);
+    var ym=cy+(H-pad.t-pad.b)/2*(pct/maxAbs);
+    html+='<line x1="'+pad.l+'" y1="'+yp+'" x2="'+(W-pad.r)+'" y2="'+yp+'" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>';
+    html+='<line x1="'+pad.l+'" y1="'+ym+'" x2="'+(W-pad.r)+'" y2="'+ym+'" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>';
+    html+='<text x="'+(pad.l-4)+'" y="'+yp+'" text-anchor="end" font-size="9" fill="var(--text3)" dominant-baseline="central">+'+pct+'%</text>';
+    html+='<text x="'+(pad.l-4)+'" y="'+ym+'" text-anchor="end" font-size="9" fill="var(--text3)" dominant-baseline="central">-'+pct+'%</text>';
+  });
+  veri.forEach(function(v,i){
+    var x=pad.l+(W-pad.l-pad.r)*(i+0.5)/veri.length-bw/2;
+    var barH=(H-pad.t-pad.b)/2*(Math.abs(v.hataPct)/maxAbs);
+    var clr=v.hataPct>0?'#1D9E75':'#E24B4A';
+    var barY=v.hataPct>0?(cy-barH):cy;
+    html+='<rect x="'+x+'" y="'+barY+'" width="'+bw+'" height="'+barH+'" rx="2" fill="'+clr+'" opacity="0.8"/>';
+    html+='<text x="'+(x+bw/2)+'" y="'+(v.hataPct>0?barY-3:barY+barH+10)+'" text-anchor="middle" font-size="8" fill="var(--text2)">'+v.kod.substring(0,6)+'</text>';
+  });
+  svg.innerHTML=html;
+}
+
+function parametreOneriGoster(){
+  var veri = getSapmaVerisi();
+  if(!veri.length) return;
+  var ortHata=veri.reduce(function(a,v){return a+Math.abs(v.hataPct);},0)/veri.length;
+  var yukselenSay=veri.filter(function(v){return v.hataPct>5;}).length;
+  var dusenleSay=veri.filter(function(v){return v.hataPct<-5;}).length;
+  var html='';
+  html+='<div class="g3" style="margin-bottom:14px">';
+  html+='<div class="metric"><p class="metric-label">Mevcut Alpha</p><p class="metric-val">'+n('t-alpha').toFixed(2)+'</p><p class="metric-sub">Seviye düzleştirme</p></div>';
+  html+='<div class="metric"><p class="metric-label">Mevcut Beta</p><p class="metric-val">'+n('t-beta').toFixed(2)+'</p><p class="metric-sub">Trend düzleştirme</p></div>';
+  html+='<div class="metric"><p class="metric-label">Mevcut Gamma</p><p class="metric-val">'+n('t-gamma').toFixed(2)+'</p><p class="metric-sub">Mevsim düzleştirme</p></div>';
+  html+='</div>';
+  var oneriler=[];
+  if(ortHata>15){
+    oneriler.push({cls:'ar',ikon:'!',txt:'Ortalama hata %'+ortHata.toFixed(1)+' — yüksek. "Parametreleri Optimize Et" butonuyla alpha/beta/gamma otomatik ayarlanabilir.'});}
+  if(yukselenSay>veri.length*0.4){
+    oneriler.push({cls:'ay',ikon:'⚠',txt:yukselenSay+' üründe tahmin düşük kaldı. Alpha değerini artır ('+Math.min(n('t-alpha')+0.1,0.9).toFixed(2)+') — son veriye daha fazla ağırlık ver.'});}
+  if(dusenleSay>veri.length*0.4){
+    oneriler.push({cls:'ay',ikon:'⚠',txt:dusenleSay+' üründe tahmin yüksek kaldı. Güvenlik tamponunu azalt veya alpha değerini düşür.'});}
+  if(ortHata<10){
+    oneriler.push({cls:'ag',ikon:'✓',txt:'Model performansı iyi (%'+ortHata.toFixed(1)+' hata). Mevcut parametreler bu dönem için uygun.'});}
+  oneriler.forEach(function(o){
+    html+='<div class="alert '+o.cls+'"><span style="flex-shrink:0;font-weight:500">'+o.ikon+'</span><span>'+o.txt+'</span></div>';
+  });
+  set('g-parametre-oneri',html);
+}
+
+function gecmisEkle(){
+  var veri = getSapmaVerisi();
+  if(!veri.length) return;
+  var ortHata=veri.reduce(function(a,v){return a+Math.abs(v.hataPct);},0)/veri.length;
+  var tarih=new Date();tarih.setMonth(tarih.getMonth()-1);
+  var ayStr=tarih.toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
+  // Geçmiş satış verisine ekle
+  veri.forEach(function(v){
+    var u=urunler.find(function(x){return x.kod===v.kod;});
+    if(u){u.aylar.push(v.ger);u.aylar.shift();}
+  });
+  guncellemeGecmisi.push({tarih:ayStr,mape:ortHata,urunSay:veri.length});
+  gecmisTabloGoster();
+  set('g-guncelleme-mesaj','<div class="alert ag"><span>✓</span><span>'+veri.length+' ürünün '+ayStr+' gerçekleşen verisi geçmişe eklendi.</span></div>');
+}
+
+function modelGuncelle(){
+  gecmisEkle();
+  tahminleriHesapla();
+  set('g-guncelleme-mesaj','<div class="alert ag"><span>✓</span><span>Geçmiş verisi güncellendi ve tüm tahminler yeniden hesaplandı. Tahminler sekmesinde güncel sonuçları görebilirsin.</span></div>');
+}
+
+function gecmisTabloGoster(){
+  if(!guncellemeGecmisi.length) return;
+  var html='<table><thead><tr><th>Güncelleme Tarihi</th><th>Ürün Sayısı</th><th>Ort. Hata (MAPE)</th><th>Model Kalitesi</th></tr></thead><tbody>';
+  guncellemeGecmisi.forEach(function(g){
+    var durum=g.mape<5?badge('bg','Mükemmel'):g.mape<10?badge('bg','İyi'):g.mape<15?badge('by','Orta'):badge('br','Zayıf');
+    html+='<tr><td style="font-weight:500">'+g.tarih+'</td><td>'+g.urunSay+' ürün</td><td>%'+g.mape.toFixed(1)+'</td><td>'+durum+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  set('g-gecmis-wrap',html);
+}
+
+function exportSapmaCSV(){
+  var veri = getSapmaVerisi();
+  if(!veri.length){alert('Önce veri yükleyin.');return;}
+  var rows=['Kod;Ad;Grup;Tahmin;Gerceklesen;Fark;Hata%'];
+  veri.forEach(function(v){
+    rows.push([v.kod,v.ad,v.grup,v.tah,v.ger,v.fark,v.hataPct.toFixed(1)+'%'].join(';'));
+  });
+  var blob=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sapma_raporu.csv';a.click();
+}
+
 </script>
 </body>
 </html>
