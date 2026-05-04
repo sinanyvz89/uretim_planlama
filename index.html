@@ -136,9 +136,9 @@
     <div style="overflow-x:auto"><table>
       <thead><tr><th>Ürün Grubu</th><th>Hız (adet/dak)</th><th>Günlük Hedef</th><th>Gereken Süre</th><th>Durum</th></tr></thead>
       <tbody>
-        <tr><td style="font-weight:500;color:#085041">Toz Dolum</td><td><input type="number" id="k-hz-toz" value="25" min="1" style="width:70px" oninput="kapHesapla()"/></td><td>10,000</td><td id="k-sure-toz">400 dak</td><td id="k-durum-toz"><span class="badge bg">OK</span></td></tr>
-        <tr><td style="font-weight:500;color:#0c447c">Granül Dolum</td><td><input type="number" id="k-hz-gran" value="18" min="1" style="width:70px" oninput="kapHesapla()"/></td><td>6,000</td><td id="k-sure-gran">333 dak</td><td id="k-durum-gran"><span class="badge bg">OK</span></td></tr>
-        <tr><td style="font-weight:500;color:#633806">Elle Dolum</td><td><input type="number" id="k-hz-elle" value="4" min="1" style="width:70px" oninput="kapHesapla()"/></td><td>500</td><td id="k-sure-elle">125 dak</td><td id="k-durum-elle"><span class="badge bg">OK</span></td></tr>
+        <tr><td style="font-weight:500;color:#085041">Toz Dolum</td><td><input type="number" id="k-hz-toz" value="25" min="1" style="width:70px" oninput="kapHesapla()"/></td><td><input type="number" id="k-ht-toz" value="10000" min="1" style="width:100px;font-weight:600;color:#085041;border:1.5px solid #1d9e75;border-radius:6px;padding:4px 8px;background:var(--bg2)" oninput="kapHesapla()"/></td><td id="k-sure-toz">400 dak</td><td id="k-durum-toz"><span class="badge bg">OK</span></td></tr>
+        <tr><td style="font-weight:500;color:#0c447c">Granül Dolum</td><td><input type="number" id="k-hz-gran" value="18" min="1" style="width:70px" oninput="kapHesapla()"/></td><td><input type="number" id="k-ht-gran" value="6000" min="1" style="width:100px;font-weight:600;color:#0c447c;border:1.5px solid #185fa5;border-radius:6px;padding:4px 8px;background:var(--bg2)" oninput="kapHesapla()"/></td><td id="k-sure-gran">333 dak</td><td id="k-durum-gran"><span class="badge bg">OK</span></td></tr>
+        <tr><td style="font-weight:500;color:#633806">Elle Dolum</td><td><input type="number" id="k-hz-elle" value="4" min="1" style="width:70px" oninput="kapHesapla()"/></td><td><input type="number" id="k-ht-elle" value="500" min="1" style="width:100px;font-weight:600;color:#633806;border:1.5px solid #ba7517;border-radius:6px;padding:4px 8px;background:var(--bg2)" oninput="kapHesapla()"/></td><td id="k-sure-elle">125 dak</td><td id="k-durum-elle"><span class="badge bg">OK</span></td></tr>
       </tbody>
     </table></div>
     <hr/>
@@ -412,7 +412,8 @@ function kapHesapla(){
   set('k-max',fmt(maxDak));set('k-opt',fmt(optDak));set('k-net',fmt(netDak));
   set('k-hmaks',fmt(maxDak*mak*gun));set('k-hopt',fmt(optDak*mak*gun));set('k-hnet',fmt(netDak*mak*gun));
   var hzToz=n('k-hz-toz'),hzGran=n('k-hz-gran'),hzElle=n('k-hz-elle');
-  var sToz=Math.round(10000/hzToz),sGran=Math.round(6000/hzGran),sElle=Math.round(500/hzElle);
+  var htToz=n('k-ht-toz')||10000,htGran=n('k-ht-gran')||6000,htElle=n('k-ht-elle')||500;
+  var sToz=Math.round(htToz/hzToz),sGran=Math.round(htGran/hzGran),sElle=Math.round(htElle/hzElle);
   var topSure=sToz+sGran+sElle,topKap=netDak*mak;
   set('k-sure-toz',fmt(sToz)+' dak');set('k-sure-gran',fmt(sGran)+' dak');set('k-sure-elle',fmt(sElle)+' dak');
   set('k-top-sure',fmt(topSure));set('k-top-kap',fmt(topKap));
@@ -423,6 +424,13 @@ function kapHesapla(){
   set('sc-a',fmt(Math.round(maxDak*eff*mak*gun))+' dak');
   set('sc-b',fmt(Math.round(maxDak*eff*mak*(gun+1)))+' dak');
   set('sc-c',fmt(Math.round(maxDak*eff*mak*gun*2))+' dak');
+  // MPS haftalık talep alanlarını günlük hedef × çalışma günü ile güncelle
+  var elToz=document.getElementById('m-talep-toz');
+  var elGran=document.getElementById('m-talep-gran');
+  var elElle=document.getElementById('m-talep-elle');
+  if(elToz&&!elToz.dataset.manuelDegisti) elToz.value=Math.round(htToz*gun);
+  if(elGran&&!elGran.dataset.manuelDegisti) elGran.value=Math.round(htGran*gun);
+  if(elElle&&!elElle.dataset.manuelDegisti) elElle.value=Math.round(htElle*gun);
 }
 
 // ── MODÜL 2 ──
@@ -644,8 +652,197 @@ function dashGuncelle(){
   set('d-stok-uyari',suHTML);
 }
 
+// ── LOCAL STORAGE: KAYDET & YÜKLE ──
+var LS_KEY = 'uretim_planlama_v1';
+
+// Kaydedilecek tüm input ID'leri
+var KAYIT_IDLER = [
+  // Kapasite
+  'k-saat','k-gun','k-mak','k-planli','k-plansiz',
+  'k-hz-toz','k-hz-gran','k-hz-elle',
+  'k-ht-toz','k-ht-gran','k-ht-elle',
+  // MPS
+  'm-hz-toz','m-hz-gran','m-hz-elle',
+  'm-talep-toz','m-talep-gran','m-talep-elle',
+  'm-onc-toz','m-onc-gran','m-onc-elle',
+  's-stok-toz','s-stok-gran','s-stok-elle',
+  's-guv-toz','s-guv-gran','s-guv-elle',
+  's-ted-toz','s-ted-gran','s-ted-elle',
+  // Darboğaz OEE
+  'oee-a','oee-p','oee-q',
+  // Dashboard ayarlar
+  'd-net','d-mak','d-gun',
+  'd-hz-toz','d-hz-gran','d-hz-elle',
+  'd-ht-toz','d-ht-gran','d-ht-elle',
+  'd-gs-toz','d-gs-gran','d-gs-elle',
+  'd-stok-toz','d-stok-gran','d-stok-elle',
+  'd-oee-a','d-oee-p','d-oee-q'
+];
+
+function veriKaydet() {
+  try {
+    var data = {};
+    KAYIT_IDLER.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) data[id] = el.value;
+    });
+    // Darboğaz istasyon satırlarını kaydet
+    var istRows = [];
+    document.querySelectorAll('.ist-row').forEach(function(r) {
+      var inps = r.querySelectorAll('input');
+      if (inps.length >= 3) {
+        istRows.push([inps[0].value, inps[1].value, inps[2].value]);
+      }
+    });
+    data['_istasyonlar'] = JSON.stringify(istRows);
+    // MRP stok verisini kaydet
+    data['_mrpStok'] = JSON.stringify(mrpStok || {});
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function veriYukle() {
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    var data = JSON.parse(raw);
+    // Input değerlerini yükle
+    KAYIT_IDLER.forEach(function(id) {
+      if (data[id] !== undefined) {
+        var el = document.getElementById(id);
+        if (el) el.value = data[id];
+      }
+    });
+    // Darboğaz istasyonlarını yükle
+    if (data['_istasyonlar']) {
+      var istRows = JSON.parse(data['_istasyonlar']);
+      var wrap = document.getElementById('istasyon-rows');
+      if (wrap && istRows.length > 0) {
+        // Mevcut satırları güncelle veya ekle
+        var mevcutRows = wrap.querySelectorAll('.ist-row');
+        istRows.forEach(function(row, i) {
+          var el;
+          if (mevcutRows[i]) {
+            el = mevcutRows[i];
+          } else {
+            el = document.createElement('div');
+            el.className = 'ist-row';
+            el.style = 'display:grid;grid-template-columns:140px 1fr 1fr 70px;gap:8px;align-items:center;margin-bottom:8px';
+            el.innerHTML = '<input type="text" oninput="dbHesapla()"/><input type="number" class="ist-kap" min="1" oninput="dbHesapla()"/><input type="number" class="ist-talep" min="1" oninput="dbHesapla()"/><span class="ist-kul" style="font-size:13px;font-weight:500">—</span>';
+            wrap.appendChild(el);
+          }
+          var inps = el.querySelectorAll('input');
+          if (inps[0]) inps[0].value = row[0];
+          if (inps[1]) inps[1].value = row[1];
+          if (inps[2]) inps[2].value = row[2];
+        });
+      }
+    }
+    // MRP stok verisini yükle
+    if (data['_mrpStok']) {
+      try { mrpStok = JSON.parse(data['_mrpStok']); } catch(e) {}
+    }
+    return true;
+  } catch(e) { return false; }
+}
+
+function veriSifirla() {
+  if (confirm('Tüm kayıtlı veriler silinecek ve varsayılan değerlere dönülecek. Emin misin?')) {
+    localStorage.removeItem(LS_KEY);
+    location.reload();
+  }
+}
+
+// ── YEDEKLEME SİSTEMİ ──
+function yedekAl() {
+  try {
+    veriKaydet(); // Önce güncel veriyi kaydet
+    var raw = localStorage.getItem(LS_KEY);
+    if (!raw) { alert('Kaydedilmiş veri bulunamadı.'); return; }
+    var yedek = {
+      versiyon: '1.0',
+      tarih: new Date().toISOString(),
+      kaynak: 'uretim-planlama-index',
+      veri: JSON.parse(raw)
+    };
+    var blob = new Blob([JSON.stringify(yedek, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    var tarihStr = new Date().toLocaleDateString('tr-TR').replace(/\./g,'-');
+    a.download = 'uretim-planlama-yedek-' + tarihStr + '.json';
+    a.click();
+    var m = document.getElementById('kayit-mesaj');
+    if(m) m.textContent = 'Yedek alındı ✓';
+  } catch(e) { alert('Yedek alınamadı: ' + e.message); }
+}
+
+function yedekYukle() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e) {
+    var dosya = e.target.files[0];
+    if (!dosya) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var yedek = JSON.parse(ev.target.result);
+        // Eski format (direkt veri) veya yeni format (meta + veri) destekle
+        var veri = yedek.veri || yedek;
+        if (!veri) { alert('Geçersiz yedek dosyası.'); return; }
+        localStorage.setItem(LS_KEY, JSON.stringify(veri));
+        if (confirm('Yedek yüklendi! (' + (yedek.tarih ? new Date(yedek.tarih).toLocaleDateString('tr-TR') : 'tarih bilinmiyor') + ')\nSayfa yenilenecek. Devam edilsin mi?')) {
+          location.reload();
+        }
+      } catch(e) { alert('Dosya okunamadı. Geçerli bir yedek dosyası seçin.'); }
+    };
+    reader.readAsText(dosya);
+  };
+  input.click();
+}
+
+// Tüm input değişimlerini otomatik kaydet (debounce ile)
+var kayitTimer = null;
+function otomatikKaydet() {
+  clearTimeout(kayitTimer);
+  kayitTimer = setTimeout(veriKaydet, 800);
+}
+document.addEventListener('input', otomatikKaydet);
+document.addEventListener('change', otomatikKaydet);
+
 // Başlat
+var yuklemeBaşarili = veriYukle();
 kapHesapla();
+
+// MPS talep alanları manuel değiştirilirse otomatik senkronizasyonu durdur
+['m-talep-toz','m-talep-gran','m-talep-elle'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('input',function(){this.dataset.manuelDegisti='1';});
+});
+
+// Kayıt bildirimi — sağ alt köşe
+(function(){
+  var bildirim = document.createElement('div');
+  bildirim.id = 'kayit-bildirim';
+  bildirim.style = 'position:fixed;bottom:16px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:8px 14px;font-size:12px;color:var(--text2);box-shadow:0 2px 12px rgba(0,0,0,0.1);z-index:999;display:flex;align-items:center;gap:8px';
+  bildirim.innerHTML = ''
+    + '<span style="color:var(--success)">●</span>'
+    + '<span id="kayit-mesaj">' + (yuklemeBaşarili ? 'Veriler yüklendi ✓' : 'Hazır') + '</span>'
+    + '<button onclick="yedekAl()" style="font-size:11px;padding:2px 8px;margin-left:6px" title="Verileri JSON dosyası olarak indir">💾 Yedek Al</button>'
+    + '<button onclick="yedekYukle()" style="font-size:11px;padding:2px 8px" title="Daha önce alınan yedeği geri yükle">📂 Yedek Yükle</button>'
+    + '<button onclick="veriSifirla()" style="font-size:11px;padding:2px 8px;color:var(--text3)" title="Tüm verileri sıfırla">Sıfırla</button>';
+  document.body.appendChild(bildirim);
+
+  document.addEventListener('input', function(){
+    var m = document.getElementById('kayit-mesaj');
+    if(m) m.textContent = 'Kaydediliyor...';
+    clearTimeout(window._bildirimTimer);
+    window._bildirimTimer = setTimeout(function(){
+      var m2 = document.getElementById('kayit-mesaj');
+      if(m2) m2.textContent = 'Kaydedildi ✓';
+    }, 1000);
+  });
+})();
 </script>
 </body>
 </html>

@@ -551,6 +551,7 @@ function tahminleriHesapla(){
       set('tahmin-durum',urunler.length+' ürün tahminlendi ✓');
       tahminTabloGoster();
       isiHaritasiGoster();
+      tcKaydet(); // Tahmin sonuçlarını localStorage'a kaydet
       return;
     }
     var u=urunler[i];
@@ -895,8 +896,139 @@ document.getElementById('ornekIndir').addEventListener('click',function(e){
   this.download='ornek_satis_verisi.csv';
 },false);
 
+// ── LOCAL STORAGE: TAHMİN-ÇİZELGE ──
+var TC_KEY = 'tahmin_cizelge_v1';
+
+var TC_IDLER = [
+  't-alpha','t-beta','t-gamma','t-ileri','t-tampon',
+  'c-dakika','c-setup','c-minurun','c-strateji','c-hafta'
+];
+
+function tcKaydet() {
+  try {
+    var data = {};
+    TC_IDLER.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) data[id]=el.value;
+    });
+    // Ürün verilerini kaydet
+    if(urunler.length) data['_urunler']=JSON.stringify(urunler);
+    // Tahmin sonuçlarını kaydet
+    if(Object.keys(tahminler).length) data['_tahminler']=JSON.stringify(tahminler);
+    localStorage.setItem(TC_KEY, JSON.stringify(data));
+  } catch(e){}
+}
+
+function tcYukle() {
+  try {
+    var raw=localStorage.getItem(TC_KEY);
+    if(!raw) return false;
+    var data=JSON.parse(raw);
+    TC_IDLER.forEach(function(id){
+      if(data[id]!==undefined){var el=document.getElementById(id);if(el)el.value=data[id];}
+    });
+    if(data['_urunler']){
+      try{urunler=JSON.parse(data['_urunler']);}catch(e){}
+    }
+    if(data['_tahminler']){
+      try{tahminler=JSON.parse(data['_tahminler']);}catch(e){}
+    }
+    return !!(urunler.length);
+  } catch(e){return false;}
+}
+
+function tcSifirla(){
+  if(confirm('Tüm kayıtlı veriler ve tahminler silinecek. Emin misin?')){
+    localStorage.removeItem(TC_KEY);
+    location.reload();
+  }
+}
+
+function tcYedekAl(){
+  try{
+    tcKaydet();
+    var raw=localStorage.getItem(TC_KEY);
+    if(!raw){alert('Kaydedilmiş veri bulunamadı.');return;}
+    var yedek={
+      versiyon:'1.0',
+      tarih:new Date().toISOString(),
+      kaynak:'uretim-planlama-tahmin-cizelge',
+      veri:JSON.parse(raw)
+    };
+    var blob=new Blob([JSON.stringify(yedek,null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    var tarihStr=new Date().toLocaleDateString('tr-TR').replace(/\./g,'-');
+    a.download='tahmin-cizelge-yedek-'+tarihStr+'.json';
+    a.click();
+    var m=document.getElementById('tc-kayit-mesaj');
+    if(m)m.textContent='Yedek alındı ✓';
+  }catch(e){alert('Yedek alınamadı: '+e.message);}
+}
+
+function tcYedekYukle(){
+  var input=document.createElement('input');
+  input.type='file';
+  input.accept='.json';
+  input.onchange=function(e){
+    var dosya=e.target.files[0];
+    if(!dosya)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var yedek=JSON.parse(ev.target.result);
+        var veri=yedek.veri||yedek;
+        if(!veri){alert('Geçersiz yedek dosyası.');return;}
+        localStorage.setItem(TC_KEY,JSON.stringify(veri));
+        var tarihTxt=yedek.tarih?new Date(yedek.tarih).toLocaleDateString('tr-TR'):'tarih bilinmiyor';
+        if(confirm('Yedek yüklendi! ('+tarihTxt+')\nSayfa yenilenecek. Devam edilsin mi?')){
+          location.reload();
+        }
+      }catch(e){alert('Dosya okunamadı. Geçerli bir yedek dosyası seçin.');}
+    };
+    reader.readAsText(dosya);
+  };
+  input.click();
+}
+
+// Otomatik kaydet
+var tcTimer=null;
+document.addEventListener('input',function(){clearTimeout(tcTimer);tcTimer=setTimeout(tcKaydet,800);});
+document.addEventListener('change',function(){clearTimeout(tcTimer);tcTimer=setTimeout(tcKaydet,800);});
+
 // Başlat
-ornekVeriYukle();
+var tcYuklendi=tcYukle();
+if(tcYuklendi && urunler.length){
+  onizlemeGoster();
+  if(Object.keys(tahminler).length){
+    setTimeout(function(){
+      tahminTabloGoster();
+      isiHaritasiGoster();
+      set('tahmin-durum', urunler.length+' ürün yüklendi (önbellekten) ✓');
+    },100);
+  }
+} else {
+  ornekVeriYukle();
+}
+
+// Kayıt bildirimi
+(function(){
+  var b=document.createElement('div');
+  b.style='position:fixed;bottom:16px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:8px 14px;font-size:12px;color:var(--text2);box-shadow:0 2px 12px rgba(0,0,0,0.1);z-index:999;display:flex;align-items:center;gap:8px';
+  b.innerHTML=''
+    +'<span style="color:var(--green)">●</span>'
+    +'<span id="tc-kayit-mesaj">'+(tcYuklendi&&urunler.length?'Veriler yüklendi ✓':'Hazır')+'</span>'
+    +'<button onclick="tcYedekAl()" style="font-size:11px;padding:2px 8px;margin-left:6px" title="Verileri JSON dosyası olarak indir">💾 Yedek Al</button>'
+    +'<button onclick="tcYedekYukle()" style="font-size:11px;padding:2px 8px" title="Daha önce alınan yedeği geri yükle">📂 Yedek Yükle</button>'
+    +'<button onclick="tcSifirla()" style="font-size:11px;padding:2px 8px;color:var(--text3)" title="Tüm verileri sıfırla">Sıfırla</button>';
+  document.body.appendChild(b);
+  document.addEventListener('input',function(){
+    var m=document.getElementById('tc-kayit-mesaj');
+    if(m)m.textContent='Kaydediliyor...';
+    clearTimeout(window._tcBildirim);
+    window._tcBildirim=setTimeout(function(){var m2=document.getElementById('tc-kayit-mesaj');if(m2)m2.textContent='Kaydedildi ✓';},1000);
+  });
+})();
 </script>
 
 <!-- ═══ SAYFA 6: AY SONU GÜNCELLE ═══ -->
